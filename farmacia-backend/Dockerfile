@@ -8,11 +8,22 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+
+RUN docker-php-ext-install \
+    pdo \
+    pdo_pgsql \
+    gd
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 RUN composer install --no-dev --optimize-autoloader
+
+RUN php artisan config:cache
 
 EXPOSE 10000
 
