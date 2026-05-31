@@ -35,13 +35,26 @@ return [
 
     'connections' => [
 
-        'sqlite' => [
-            'driver' => 'sqlite',
+        'pgsql' => [
+            'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+
+            'host' => env('DB_HOST'),
+            'port' => env('DB_PORT', '5432'),
+
+            'database' => env('DB_DATABASE'),
+            'username' => env('DB_USERNAME'),
+            'password' => env('DB_PASSWORD'),
+
+            'charset' => 'utf8',
             'prefix' => '',
-            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-        ],
+            'prefix_indexes' => true,
+
+            'schema' => 'public',
+
+            // importante para Supabase
+            'sslmode' => 'require',
+],
 
         'mysql' => [
             'driver' => 'mysql',
