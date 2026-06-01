@@ -110,10 +110,7 @@ localStorage.setItem(
     JSON.stringify(res.data.user)
 );
 
-localStorage.setItem(
-    "rol",
-    res.data.user.rol
-);
+
 
             Swal.close();
 
@@ -125,7 +122,7 @@ localStorage.setItem(
             });
 
             // REDIRECCION
-            window.location.href = "/dashboard";
+            navigate("/dashboard", { replace: true });
 
         } catch (error) {
 
