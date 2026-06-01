@@ -143,57 +143,45 @@ function EditarProducto() {
   // ACTUALIZAR
   // =========================================
 const actualizar = async () => {
+  if (
+    !form.nombre ||
+    !form.codigo ||
+    !form.tipo ||
+    !form.precio ||
+    !form.stock ||
+    !form.categoria_id
+  ) {
+    Swal.fire("Error", "Completa todos los campos obligatorios", "warning");
+    return;
+  }
 
-    if (
-        !form.nombre ||
-        !form.codigo ||
-        !form.tipo ||
-        !form.precio ||
-        !form.stock ||
-        !form.categoria_id
-    ) {
-        Swal.fire(
-            "Error",
-            "Completa todos los campos obligatorios",
-            "warning"
-        );
-        return;
-    }
+  try {
+    const formData = new FormData();
 
-    try {
+    formData.append("_method", "PUT");
+    formData.append("nombre", form.nombre.trim());
+    formData.append("codigo", form.codigo.trim());
+    formData.append("tipo", form.tipo);
+    formData.append("precio", Number(form.precio));
+    formData.append("stock", Number(form.stock));
+    formData.append("stock_minimo", Number(form.stock_minimo || 0));
+    formData.append("categoria_id", Number(form.categoria_id));
 
-        const formData = new FormData();
+    await api.post(`/productos/${id}`, formData);
 
-        formData.append("_method", "PUT");
+    Swal.fire("Actualizado", "Producto actualizado correctamente", "success");
 
-        formData.append("nombre", form.nombre.trim());
-        formData.append("codigo", form.codigo.trim());
-        formData.append("tipo", form.tipo);
-        formData.append("precio", form.precio);
-        formData.append("stock", form.stock);
-        formData.append("stock_minimo", form.stock_minimo || 0);
-        formData.append("categoria_id", form.categoria_id);
+    navigate("/productos");
 
-        await api.post(`/productos/${id}`, formData);
+  } catch (error) {
+    console.log(error.response?.data);
 
-        Swal.fire(
-            "Actualizado",
-            "Producto actualizado correctamente",
-            "success"
-        );
-
-        navigate("/productos");
-
-    } catch (error) {
-
-        console.log(error.response?.data);
-
-        Swal.fire(
-            "Error",
-            error.response?.data?.message || "No se pudo actualizar",
-            "error"
-        );
-    }
+    Swal.fire(
+      "Error",
+      error.response?.data?.message || "No se pudo actualizar",
+      "error"
+    );
+  }
 };
 
   // =========================================
