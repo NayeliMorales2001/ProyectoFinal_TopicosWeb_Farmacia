@@ -144,3 +144,11 @@ Route::middleware(['role:admin'])->group(function () {
         'message' => 'API funcionando correctamente'
     ]);
 });
+
+Route::middleware('auth:sanctum')->get('/usuario-test', function (\Illuminate\Http\Request $request) {
+
+    return response()->json([
+        'user' => $request->user()
+    ]);
+
+});
