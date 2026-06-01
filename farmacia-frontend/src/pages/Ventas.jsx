@@ -10,6 +10,8 @@ function Ventas() {
     const [ventas, setVentas] = useState([]);
 
     const [productosSeleccionados, setProductosSeleccionados] = useState([]);
+    const [productoActual, setProductoActual] = useState("");
+    const [cantidadActual, setCantidadActual] = useState(1);
     const [pacienteId, setPacienteId] = useState("");
     const [medicoId, setMedicoId] = useState("");
     const [buscarVenta, setBuscarVenta] = useState("");
@@ -41,21 +43,59 @@ function Ventas() {
         cargar();
     }, []);
 
-    const toggleProducto = (producto) => {
-        const existe = productosSeleccionados.find(p => p.id === producto.id);
-        if (existe) {
-            setProductosSeleccionados(productosSeleccionados.filter(p => p.id !== producto.id));
-        } else {
-            setProductosSeleccionados([
-                ...productosSeleccionados,
-                { id: producto.id, nombre: producto.nombre, precio: producto.precio, cantidad: 1 }
-            ]);
+    const agregarProducto = () => {
+        if (!productoActual) {
+            Swal.fire("Error", "Selecciona un producto", "warning");
+            return;
         }
+
+        const producto = productos.find(p => p.id === parseInt(productoActual));
+        
+        if (!producto) return;
+
+        const existe = productosSeleccionados.find(p => p.id === producto.id);
+        
+        if (existe) {
+            Swal.fire("Error", "El producto ya fue agregado. Puedes editar la cantidad en la lista.", "warning");
+            return;
+        }
+
+        if (cantidadActual > producto.stock) {
+            Swal.fire("Error", `Stock insuficiente. Solo hay ${producto.stock} unidades`, "warning");
+            return;
+        }
+
+        setProductosSeleccionados([
+            ...productosSeleccionados,
+            {
+                id: producto.id,
+                nombre: producto.nombre,
+                precio: producto.precio,
+                cantidad: cantidadActual,
+                stock: producto.stock
+            }
+        ]);
+
+        setProductoActual("");
+        setCantidadActual(1);
     };
 
-    const cambiarCantidad = (id, value) => {
+    const eliminarProducto = (id) => {
+        setProductosSeleccionados(productosSeleccionados.filter(p => p.id !== id));
+    };
+
+    const actualizarCantidad = (id, nuevaCantidad) => {
+        const producto = productosSeleccionados.find(p => p.id === id);
+        if (nuevaCantidad > producto.stock) {
+            Swal.fire("Error", `Stock insuficiente. Solo hay ${producto.stock} unidades`, "warning");
+            return;
+        }
+        if (nuevaCantidad < 1) {
+            Swal.fire("Error", "La cantidad debe ser al menos 1", "warning");
+            return;
+        }
         setProductosSeleccionados(prev =>
-            prev.map(p => p.id === id ? { ...p, cantidad: Number(value) } : p)
+            prev.map(p => p.id === id ? { ...p, cantidad: nuevaCantidad } : p)
         );
     };
 
@@ -63,11 +103,13 @@ function Ventas() {
         setProductosSeleccionados([]);
         setPacienteId("");
         setMedicoId("");
+        setProductoActual("");
+        setCantidadActual(1);
     };
 
     const guardarVenta = async () => {
         if (!pacienteId || !medicoId || productosSeleccionados.length === 0) {
-            return Swal.fire("Error", "Completa todos los campos", "warning");
+            return Swal.fire("Error", "Completa todos los campos (paciente, médico y al menos un producto)", "warning");
         }
 
         try {
@@ -93,7 +135,6 @@ function Ventas() {
 
     const totalActual = productosSeleccionados.reduce((acc, p) => acc + (p.precio * p.cantidad), 0);
 
-    // Filtrar ventas
     const ventasFiltradas = ventas.filter(v =>
         (v.paciente?.nombre || "").toLowerCase().includes(buscarVenta.toLowerCase()) ||
         (v.medico?.nombre || "").toLowerCase().includes(buscarVenta.toLowerCase())
@@ -126,7 +167,7 @@ function Ventas() {
                         <h4 className="fw-bold mb-0">➕ Nueva Venta</h4>
                     </div>
                     <div className="card-body">
-                        <div className="row g-3">
+                        <div className="row g-4">
                             {/* Paciente */}
                             <div className="col-md-6">
                                 <label className="form-label fw-bold">👤 Paciente</label>
@@ -157,76 +198,114 @@ function Ventas() {
                                 </select>
                             </div>
 
-                            {/* Productos */}
+                            {/* Agregar Productos - Lista desplegable */}
                             <div className="col-12">
-                                <label className="form-label fw-bold">💊 Productos</label>
-                                <div className="row">
-                                    {productos.map(p => {
-                                        const sel = productosSeleccionados.find(x => x.id === p.id);
-                                        return (
-                                            <div className="col-md-6 col-lg-4 mb-3" key={p.id}>
-                                                <div className={`card h-100 ${sel ? 'border-primary shadow-sm' : 'border'}`} style={{ borderRadius: "12px", cursor: "pointer" }}>
-                                                    <div className="card-body">
-                                                        <div className="form-check">
-                                                            <input
-                                                                className="form-check-input"
-                                                                type="checkbox"
-                                                                checked={!!sel}
-                                                                onChange={() => toggleProducto(p)}
-                                                                id={`producto-${p.id}`}
-                                                            />
-                                                            <label className="form-check-label fw-semibold" htmlFor={`producto-${p.id}`}>
-                                                                {p.nombre}
-                                                            </label>
-                                                        </div>
-                                                        <div className="mt-2">
-                                                            <small className="text-muted">💰 Precio: ${p.precio}</small>
-                                                            <br />
-                                                            <small className="text-muted">📦 Stock: {p.stock}</small>
-                                                        </div>
-                                                        {sel && (
-                                                            <div className="mt-2">
-                                                                <label className="form-label small">Cantidad:</label>
-                                                                <input
-                                                                    type="number"
-                                                                    min="1"
-                                                                    max={p.stock}
-                                                                    className="form-control form-control-sm"
-                                                                    value={sel.cantidad}
-                                                                    onChange={(e) => cambiarCantidad(p.id, e.target.value)}
-                                                                />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                <label className="form-label fw-bold">💊 Agregar Producto</label>
+                                <div className="row g-2">
+                                    <div className="col-md-6">
+                                        <select 
+                                            className="form-select" 
+                                            value={productoActual} 
+                                            onChange={(e) => setProductoActual(e.target.value)}
+                                        >
+                                            <option value="">Seleccionar producto</option>
+                                            {productos
+                                                .filter(p => !productosSeleccionados.find(sel => sel.id === p.id))
+                                                .map(p => (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.nombre} - ${p.precio} (Stock: {p.stock})
+                                                    </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            placeholder="Cantidad"
+                                            min="1"
+                                            value={cantidadActual}
+                                            onChange={(e) => setCantidadActual(parseInt(e.target.value) || 1)}
+                                        />
+                                    </div>
+                                    <div className="col-md-3">
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-primary w-100"
+                                            onClick={agregarProducto}
+                                        >
+                                            ➕ Agregar
+                                        </button>
+                                    </div>
                                 </div>
-                                {productos.length === 0 && (
-                                    <div className="alert alert-warning">No hay productos disponibles</div>
-                                )}
                             </div>
 
-                            {/* Total */}
-                            <div className="col-12">
-                                <hr />
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <h3 className="fw-bold mb-0">Total:</h3>
-                                    <h2 className="fw-bold text-success mb-0">${totalActual.toFixed(2)}</h2>
+                            {/* Lista de productos seleccionados */}
+                            {productosSeleccionados.length > 0 && (
+                                <div className="col-12">
+                                    <label className="form-label fw-bold">📋 Productos seleccionados</label>
+                                    <div className="table-responsive">
+                                        <table className="table table-sm table-hover">
+                                            <thead className="table-light">
+                                                <tr>
+                                                    <th>Producto</th>
+                                                    <th>Precio</th>
+                                                    <th>Cantidad</th>
+                                                    <th>Subtotal</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {productosSeleccionados.map(p => (
+                                                    <tr key={p.id}>
+                                                        <td>{p.nombre}</td>
+                                                        <td>${p.precio}</td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                className="form-control form-control-sm"
+                                                                style={{ width: "80px" }}
+                                                                min="1"
+                                                                max={p.stock}
+                                                                value={p.cantidad}
+                                                                onChange={(e) => actualizarCantidad(p.id, parseInt(e.target.value) || 1)}
+                                                            />
+                                                        </td>
+                                                        <td className="fw-bold">${(p.precio * p.cantidad).toFixed(2)}</td>
+                                                        <td>
+                                                            <button 
+                                                                className="btn btn-danger btn-sm"
+                                                                onClick={() => eliminarProducto(p.id)}
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            <tfoot className="table-active">
+                                                <tr>
+                                                    <td colSpan="3" className="text-end fw-bold">Total:</td>
+                                                    <td className="fw-bold text-success fs-5">${totalActual.toFixed(2)}</td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Botones */}
                             <div className="col-12">
+                                <hr />
                                 <button
-                                    className="btn btn-primary me-2"
+                                    className="btn btn-primary me-2 px-4"
                                     onClick={guardarVenta}
                                     disabled={saving}
                                 >
                                     {saving ? "Guardando..." : "💰 Guardar Venta"}
                                 </button>
-                                <button className="btn btn-secondary" onClick={limpiar}>
+                                <button className="btn btn-secondary px-4" onClick={limpiar}>
                                     🧹 Limpiar
                                 </button>
                             </div>
