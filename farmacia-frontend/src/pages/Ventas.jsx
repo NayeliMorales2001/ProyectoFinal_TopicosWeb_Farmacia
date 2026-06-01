@@ -66,6 +66,7 @@ function Ventas() {
                     id: producto.id,
                     nombre: producto.nombre,
                     precio: producto.precio,
+                    stock: producto.stock,
                     cantidad: 1
                 }
             ];
@@ -137,93 +138,206 @@ function Ventas() {
         }
     };
 
+    // =========================
+    // TOTAL GENERAL
+    // =========================
+    const totalVentas = ventas.reduce(
+        (acc, v) => acc + Number(v.total || 0),
+        0
+    );
+
+    const totalActual = productosSeleccionados.reduce(
+        (acc, p) => acc + (p.precio * p.cantidad),
+        0
+    );
+
     if (loading) {
-        return <p className="text-center p-5">Cargando...</p>;
+        return (
+            <div className="text-center py-5">
+                <div className="spinner-border text-primary"></div>
+            </div>
+        );
     }
 
     return (
-        <div className="container py-4">
+        <div className="container-fluid py-4">
 
-            <h2>💰 Ventas</h2>
+            {/* HEADER */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
 
-            {/* PACIENTE */}
-            <select
-                className="form-select mb-2"
-                value={pacienteId}
-                onChange={(e) => setPacienteId(e.target.value)}
-            >
-                <option value="">Selecciona paciente</option>
-                {pacientes.map(p => (
-                    <option key={p.id} value={p.id}>
-                        {p.nombre}
-                    </option>
-                ))}
-            </select>
+                <div>
+                    <h2 className="fw-bold">💰 Ventas</h2>
+                    <p className="text-muted mb-0">
+                        Total histórico: ${totalVentas.toFixed(2)}
+                    </p>
+                </div>
 
-            {/* MÉDICO */}
-            <select
-                className="form-select mb-3"
-                value={medicoId}
-                onChange={(e) => setMedicoId(e.target.value)}
-            >
-                <option value="">Selecciona médico</option>
-                {medicos.map(m => (
-                    <option key={m.id} value={m.id}>
-                        {m.nombre}
-                    </option>
-                ))}
-            </select>
+            </div>
 
-            {/* PRODUCTOS */}
-            <h5>Productos</h5>
+            {/* FORM */}
+            <div className="card border-0 shadow-sm rounded-4 mb-4">
+                <div className="card-body">
 
-            {productos.map(p => {
-                const seleccionado = productosSeleccionados.find(x => x.id === p.id);
+                    <h4 className="fw-bold mb-4">🛒 Nueva venta</h4>
 
-                return (
-                    <div key={p.id} className="border p-2 mb-2">
+                    <div className="row g-3">
 
-                        <label>
+                        {/* PACIENTE */}
+                        <div className="col-md-4">
+                            <label className="form-label">Paciente</label>
+                            <select
+                                className="form-select"
+                                value={pacienteId}
+                                onChange={(e) => setPacienteId(e.target.value)}
+                            >
+                                <option value="">Selecciona</option>
+                                {pacientes.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* MÉDICO */}
+                        <div className="col-md-4">
+                            <label className="form-label">Médico</label>
+                            <select
+                                className="form-select"
+                                value={medicoId}
+                                onChange={(e) => setMedicoId(e.target.value)}
+                            >
+                                <option value="">Selecciona</option>
+                                {medicos.map(m => (
+                                    <option key={m.id} value={m.id}>
+                                        {m.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* TOTAL */}
+                        <div className="col-md-4">
+                            <label className="form-label">Total actual</label>
                             <input
-                                type="checkbox"
-                                checked={!!seleccionado}
-                                onChange={() => toggleProducto(p)}
-                            />{" "}
-                            {p.nombre} - ${p.precio} (Stock: {p.stock})
-                        </label>
-
-                        {seleccionado && (
-                            <input
-                                type="number"
-                                min="1"
-                                max={p.stock}
-                                className="form-control mt-2"
-                                value={seleccionado.cantidad}
-                                onChange={(e) =>
-                                    cambiarCantidad(p.id, e.target.value)
-                                }
+                                className="form-control"
+                                value={`$${totalActual.toFixed(2)}`}
+                                readOnly
                             />
-                        )}
+                        </div>
 
                     </div>
-                );
-            })}
 
-            {/* BOTONES */}
-            <button
-                className="btn btn-success mt-3"
-                onClick={guardarVenta}
-                disabled={saving}
-            >
-                {saving ? "Guardando..." : "Guardar venta"}
-            </button>
+                    {/* PRODUCTOS */}
+                    <h5 className="mt-4">Productos</h5>
 
-            <button
-                className="btn btn-secondary ms-2 mt-3"
-                onClick={limpiar}
-            >
-                Limpiar
-            </button>
+                    {productos.map(p => {
+                        const seleccionado = productosSeleccionados.find(x => x.id === p.id);
+
+                        return (
+                            <div key={p.id} className="border p-2 mb-2 rounded">
+
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={!!seleccionado}
+                                        onChange={() => toggleProducto(p)}
+                                    />{" "}
+                                    {p.nombre} - ${p.precio} (Stock: {p.stock})
+                                </label>
+
+                                {seleccionado && (
+                                    <input
+                                        type="number"
+                                        className="form-control mt-2"
+                                        min="1"
+                                        max={p.stock}
+                                        value={seleccionado.cantidad}
+                                        onChange={(e) =>
+                                            cambiarCantidad(p.id, e.target.value)
+                                        }
+                                    />
+                                )}
+
+                            </div>
+                        );
+                    })}
+
+                    {/* BOTONES */}
+                    <div className="mt-3 d-flex gap-2">
+
+                        <button
+                            className="btn btn-success"
+                            onClick={guardarVenta}
+                            disabled={saving}
+                        >
+                            {saving ? "Guardando..." : "Guardar venta"}
+                        </button>
+
+                        <button
+                            className="btn btn-secondary"
+                            onClick={limpiar}
+                        >
+                            Limpiar
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+
+            {/* TABLA HISTORIAL */}
+            <div className="card border-0 shadow-sm rounded-4">
+                <div className="card-body">
+
+                    <h4 className="fw-bold mb-4">📋 Historial de ventas</h4>
+
+                    <div className="table-responsive">
+
+                        <table className="table table-hover">
+
+                            <thead className="table-light">
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>Médico</th>
+                                    <th>Total</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {ventas.length > 0 ? (
+                                    ventas.map(v => (
+                                        <tr key={v.id}>
+                                            <td>{v.paciente?.nombre}</td>
+                                            <td>{v.medico?.nombre}</td>
+                                            <td className="text-success fw-bold">
+                                                ${Number(v.total).toFixed(2)}
+                                            </td>
+                                            <td>
+                                                {v.created_at
+                                                    ? new Date(v.created_at).toLocaleDateString()
+                                                    : "—"}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="4" className="text-center">
+                                            Sin ventas
+                                        </td>
+                                    </tr>
+                                )}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+            </div>
 
         </div>
     );
