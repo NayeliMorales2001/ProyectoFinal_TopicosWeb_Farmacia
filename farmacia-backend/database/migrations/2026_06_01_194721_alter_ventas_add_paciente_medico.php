@@ -10,18 +10,18 @@ return new class extends Migration
     {
         Schema::table('ventas', function (Blueprint $table) {
 
-            $table->unsignedBigInteger('paciente_id')->after('producto_id');
-            $table->unsignedBigInteger('medico_id')->after('paciente_id');
+            $table->foreignId('paciente_id')
+                ->nullable()
+                ->after('producto_id')
+                ->constrained('pacientes')
+                ->nullOnDelete();
 
-            $table->foreign('paciente_id')
-                ->references('id')
-                ->on('pacientes')
-                ->onDelete('cascade');
+            $table->foreignId('medico_id')
+                ->nullable()
+                ->after('paciente_id')
+                ->constrained('medicos')
+                ->nullOnDelete();
 
-            $table->foreign('medico_id')
-                ->references('id')
-                ->on('medicos')
-                ->onDelete('cascade');
         });
     }
 
