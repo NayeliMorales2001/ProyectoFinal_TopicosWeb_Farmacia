@@ -152,7 +152,7 @@ function Ventas() {
 
     return (
         <Layout>
-            <div className="container-fluid py-4">
+            <div className="px-4 py-4" style={{ width: "100%", maxWidth: "100%" }}>
                 {/* Header */}
                 <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                     <div>
