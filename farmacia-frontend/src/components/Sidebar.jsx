@@ -11,8 +11,7 @@ function Sidebar() {
 
     try {
 
-        const storedUser =
-            localStorage.getItem("user");
+        const storedUser = localStorage.getItem("user");
 
         user = storedUser
             ? JSON.parse(storedUser)
@@ -27,99 +26,76 @@ function Sidebar() {
     // =====================================
     // LOGOUT
     // =====================================
- const logout = () => {
+    const logout = () => {
 
-    localStorage.removeItem("token");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("rol");
 
-    localStorage.removeItem("user");
+        window.location.href = "/login";
 
-    localStorage.removeItem("rol");
-
-    window.location.href = "/login";
-
-};
+    };
 
     // =====================================
     // MENU
     // =====================================
-  const rol = user?.rol;
+    const rol = user?.rol;
 
-const menu = [
+    const menu = [
 
-    {
-        path: "/dashboard",
-        icon: "📊",
-        label: "Dashboard"
-    },
+        {
+            path: "/dashboard",
+            icon: "📊",
+            label: "Dashboard"
+        },
 
-    {
-        path: "/productos",
-        icon: "📦",
-        label: "Productos"
-    },
+        {
+            path: "/productos",
+            icon: "📦",
+            label: "Productos"
+        },
 
-    {
-        path: "/ventas",
-        icon: "💰",
-        label: "Ventas"
-    },
+        {
+            path: "/ventas",
+            icon: "💰",
+            label: "Ventas"
+        },
 
-    {
-        path: "/pacientes",
-        icon: "🧑‍⚕️",
-        label: "Pacientes"
+        {
+            path: "/pacientes",
+            icon: "🧑‍⚕️",
+            label: "Pacientes"
+        }
+
+    ];
+
+    // SOLO ADMIN
+    if (rol === "admin") {
+
+        menu.push(
+
+            {
+                path: "/productos/crear",
+                icon: "➕",
+                label: "Crear Producto"
+            },
+
+            {
+                path: "/medicos",
+                icon: "👨‍⚕️",
+                label: "Médicos"
+            }
+
+        );
+
     }
-
-];
-
-if (rol === "admin") {
-
-    menu.push(
-
-        {
-            path: "/productos/crear",
-            icon: "➕",
-            label: "Crear Producto"
-        },
-
-        {
-            path: "/medicos",
-            icon: "👨‍⚕️",
-            label: "Médicos"
-        }
-
-    );
-
-}
-
-// SOLO ADMIN
-if (rol === "admin") {
-
-    menu.push(
-
-        {
-            path: "/productos/crear",
-            icon: "➕",
-            label: "Crear Producto"
-        },
-
-        {
-            path: "/medicos",
-            icon: "👨‍⚕️",
-            label: "Médicos"
-        }
-
-    );
-
-}
 
     return (
 
         <aside
             style={{
                 width: "260px",
-                background:
-                    "linear-gradient(180deg,#0f172a,#172554)",
+                background: "linear-gradient(180deg,#0f172a,#172554)",
                 color: "#fff",
                 padding: "24px 18px",
                 display: "flex",
@@ -138,17 +114,13 @@ if (rol === "admin") {
 
                 <h2
                     className="fw-bold"
-                    style={{
-                        color: "#fff"
-                    }}
+                    style={{ color: "#fff" }}
                 >
                     💊 Farmacia ERP
                 </h2>
 
                 <small
-                    style={{
-                        color: "#94a3b8"
-                    }}
+                    style={{ color: "#94a3b8" }}
                 >
                     Panel Administrativo
                 </small>
@@ -159,8 +131,7 @@ if (rol === "admin") {
             <div
                 className="mb-4 p-3"
                 style={{
-                    background:
-                        "rgba(255,255,255,0.06)",
+                    background: "rgba(255,255,255,0.06)",
                     borderRadius: "14px"
                 }}
             >
@@ -170,9 +141,7 @@ if (rol === "admin") {
                 </div>
 
                 <small
-                    style={{
-                        color: "#94a3b8"
-                    }}
+                    style={{ color: "#94a3b8" }}
                 >
                     {user?.rol || "Empleado"}
                 </small>
@@ -189,51 +158,49 @@ if (rol === "admin") {
                 }}
             >
 
-                {
-                    menu.map((item) => {
+                {menu.map((item) => {
 
-                        const active =
-                            location.pathname === item.path;
+                    const active =
+                        location.pathname === item.path;
 
-                        return (
+                    return (
 
-                            <Link
-                                key={item.path}
-                                to={item.path}
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            style={{
+                                textDecoration: "none",
+                                padding: "14px 16px",
+                                borderRadius: "14px",
+                                background: active
+                                    ? "linear-gradient(135deg,#2563eb,#1d4ed8)"
+                                    : "transparent",
+                                color: "#fff",
+                                fontWeight: active
+                                    ? "600"
+                                    : "500",
+                                transition: "0.3s",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px"
+                            }}
+                        >
+
+                            <span
                                 style={{
-                                    textDecoration: "none",
-                                    padding: "14px 16px",
-                                    borderRadius: "14px",
-                                    background: active
-                                        ? "linear-gradient(135deg,#2563eb,#1d4ed8)"
-                                        : "transparent",
-                                    color: "#fff",
-                                    fontWeight: active
-                                        ? "600"
-                                        : "500",
-                                    transition: "0.3s",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "12px"
+                                    fontSize: "18px"
                                 }}
                             >
+                                {item.icon}
+                            </span>
 
-                                <span
-                                    style={{
-                                        fontSize: "18px"
-                                    }}
-                                >
-                                    {item.icon}
-                                </span>
+                            {item.label}
 
-                                {item.label}
+                        </Link>
 
-                            </Link>
+                    );
 
-                        );
-
-                    })
-                }
+                })}
 
             </div>
 
@@ -242,8 +209,7 @@ if (rol === "admin") {
                 onClick={logout}
                 className="btn mt-3"
                 style={{
-                    background:
-                        "linear-gradient(135deg,#ef4444,#dc2626)",
+                    background: "linear-gradient(135deg,#ef4444,#dc2626)",
                     color: "#fff",
                     borderRadius: "14px",
                     padding: "12px",
