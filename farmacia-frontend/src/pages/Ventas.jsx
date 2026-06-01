@@ -1,28 +1,22 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import Swal from "sweetalert2";
+import Layout from "../components/Layout";
 
 function Ventas() {
 
-    // =========================
-    // STATES
-    // =========================
     const [productos, setProductos] = useState([]);
     const [pacientes, setPacientes] = useState([]);
     const [medicos, setMedicos] = useState([]);
     const [ventas, setVentas] = useState([]);
 
     const [productosSeleccionados, setProductosSeleccionados] = useState([]);
-
     const [pacienteId, setPacienteId] = useState("");
     const [medicoId, setMedicoId] = useState("");
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // =========================
-    // CARGAR DATOS
-    // =========================
     const cargar = async () => {
         try {
             setLoading(true);
@@ -41,7 +35,6 @@ function Ventas() {
             setVentas(ventasRes.data.data || []);
 
         } catch (error) {
-            console.log(error);
             Swal.fire("Error", "No se pudieron cargar datos", "error");
         } finally {
             setLoading(false);
@@ -52,11 +45,7 @@ function Ventas() {
         cargar();
     }, []);
 
-    // =========================
-    // TOGGLE PRODUCTO
-    // =========================
     const toggleProducto = (producto) => {
-
         const existe = productosSeleccionados.find(p => p.id === producto.id);
 
         if (existe) {
@@ -76,33 +65,21 @@ function Ventas() {
         }
     };
 
-    // =========================
-    // CAMBIAR CANTIDAD
-    // =========================
     const cambiarCantidad = (id, value) => {
         setProductosSeleccionados(prev =>
             prev.map(p =>
-                p.id === id
-                    ? { ...p, cantidad: Number(value) }
-                    : p
+                p.id === id ? { ...p, cantidad: Number(value) } : p
             )
         );
     };
 
-    // =========================
-    // LIMPIAR
-    // =========================
     const limpiar = () => {
         setProductosSeleccionados([]);
         setPacienteId("");
         setMedicoId("");
     };
 
-    // =========================
-    // GUARDAR VENTA
-    // =========================
     const guardarVenta = async () => {
-
         if (!pacienteId || !medicoId || productosSeleccionados.length === 0) {
             return Swal.fire("Error", "Completa todos los campos", "warning");
         }
@@ -110,16 +87,14 @@ function Ventas() {
         try {
             setSaving(true);
 
-            const data = {
+            await api.post("/ventas", {
                 paciente_id: pacienteId,
                 medico_id: medicoId,
                 productos: productosSeleccionados.map(p => ({
                     producto_id: p.id,
                     cantidad: p.cantidad
                 }))
-            };
-
-            await api.post("/ventas", data);
+            });
 
             Swal.fire("Éxito", "Venta registrada correctamente", "success");
 
@@ -127,7 +102,6 @@ function Ventas() {
             cargar();
 
         } catch (error) {
-            console.log(error);
             Swal.fire(
                 "Error",
                 error.response?.data?.message || "Error al guardar",
@@ -138,16 +112,10 @@ function Ventas() {
         }
     };
 
-    // =========================
-    // PDF
-    // =========================
     const descargarPDF = (id) => {
         window.open(`${api.defaults.baseURL}/ventas/pdf/${id}`, "_blank");
     };
 
-    // =========================
-    // TOTAL
-    // =========================
     const totalActual = productosSeleccionados.reduce(
         (acc, p) => acc + (p.precio * p.cantidad),
         0
@@ -155,154 +123,110 @@ function Ventas() {
 
     if (loading) {
         return (
-            <div className="text-center py-5">
-                <div className="spinner-border text-primary"></div>
-            </div>
+            <Layout>
+                <div className="text-center py-5">
+                    <div className="spinner-border text-primary"></div>
+                </div>
+            </Layout>
         );
     }
 
     return (
-        <div className="container-fluid py-4">
+        <Layout>
+            <div className="container py-4">
 
-            {/* HEADER */}
-            <div className="mb-4">
-                <h2 className="fw-bold">💰 Ventas</h2>
-                <p className="text-muted">Registro de ventas farmacia</p>
-            </div>
-
-            <div className="row g-4">
-
-                {/* FORM */}
-                <div className="col-lg-8">
-                    <div className="card shadow-sm border-0 rounded-4">
+                <div className="mb-4">
+                    <div className="card border-0 shadow-sm" style={{borderRadius:"18px",background:"linear-gradient(135deg,#eff6ff,#ffffff)"}}>
                         <div className="card-body">
-
-                            <h4 className="fw-bold mb-3">🛒 Nueva venta</h4>
-
-                            {/* PACIENTE */}
-                            <select
-                                className="form-select mb-3"
-                                value={pacienteId}
-                                onChange={(e) => setPacienteId(e.target.value)}
-                            >
-                                <option value="">Selecciona paciente</option>
-                                {pacientes.map(p => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.nombre}
-                                    </option>
-                                ))}
-                            </select>
-
-                            {/* MÉDICO */}
-                            <select
-                                className="form-select mb-3"
-                                value={medicoId}
-                                onChange={(e) => setMedicoId(e.target.value)}
-                            >
-                                <option value="">Selecciona médico</option>
-                                {medicos.map(m => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.nombre}
-                                    </option>
-                                ))}
-                            </select>
-
-                            {/* PRODUCTOS */}
-                            <h5>Productos</h5>
-
-                            {productos.map(p => {
-
-                                const sel = productosSeleccionados.find(x => x.id === p.id);
-
-                                return (
-                                    <div key={p.id} className="border p-2 mb-2 rounded">
-
-                                        <label>
-                                            <input
-                                                type="checkbox"
-                                                checked={!!sel}
-                                                onChange={() => toggleProducto(p)}
-                                            />{" "}
-                                            {p.nombre} - ${p.precio} (Stock: {p.stock})
-                                        </label>
-
-                                        {sel && (
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                className="form-control mt-2"
-                                                value={sel.cantidad}
-                                                onChange={(e) =>
-                                                    cambiarCantidad(p.id, e.target.value)
-                                                }
-                                            />
-                                        )}
-
-                                    </div>
-                                );
-                            })}
-
-                            <h4 className="mt-3 text-success">
-                                Total: ${totalActual.toFixed(2)}
-                            </h4>
-
-                            <button
-                                className="btn btn-success mt-2"
-                                onClick={guardarVenta}
-                                disabled={saving}
-                            >
-                                {saving ? "Guardando..." : "Guardar venta"}
-                            </button>
-
-                            <button
-                                className="btn btn-secondary mt-2 ms-2"
-                                onClick={limpiar}
-                            >
-                                Limpiar
-                            </button>
-
+                            <h2 className="fw-bold">💊 Nueva Venta</h2>
+                            <p className="text-muted mb-0">Gestión de ventas de farmacia</p>
                         </div>
                     </div>
                 </div>
 
-                {/* HISTORIAL */}
-                <div className="col-lg-4">
+                <div className="card shadow-sm border-0 mb-4" style={{borderRadius:"15px"}}>
+                    <div className="card-body">
 
-                    <div className="card shadow-sm border-0 rounded-4">
-                        <div className="card-body">
+                        <h5 className="fw-semibold mb-3">Datos de venta</h5>
 
-                            <h5 className="fw-bold">📋 Historial</h5>
+                        <select className="form-select mb-3" value={pacienteId} onChange={(e)=>setPacienteId(e.target.value)}>
+                            <option value="">Seleccionar paciente</option>
+                            {pacientes.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
+                        </select>
 
-                            {ventas.map(v => (
+                        <select className="form-select mb-3" value={medicoId} onChange={(e)=>setMedicoId(e.target.value)}>
+                            <option value="">Seleccionar médico</option>
+                            {medicos.map(m=><option key={m.id} value={m.id}>{m.nombre}</option>)}
+                        </select>
 
-                                <div key={v.id} className="border p-2 mb-2 rounded">
+                        <h5 className="mb-3">Productos</h5>
 
-                                    <div><b>Paciente:</b> {v.paciente?.nombre}</div>
-                                    <div><b>Médico:</b> {v.medico?.nombre}</div>
+                        {productos.map(p=>{
+                            const sel = productosSeleccionados.find(x=>x.id===p.id);
 
-                                    <div className="text-success fw-bold">
-                                        ${v.total}
-                                    </div>
+                            return (
+                                <div key={p.id} className="mb-3 p-3" style={{border:"1px solid #e5e7eb",borderRadius:"12px",background:"#f8fafc"}}>
+                                    <label>
+                                        <input type="checkbox" checked={!!sel} onChange={()=>toggleProducto(p)} />{" "}
+                                        {p.nombre} - ${p.precio} (Stock: {p.stock})
+                                    </label>
 
-                                    <button
-                                        className="btn btn-sm btn-danger mt-2"
-                                        onClick={() => descargarPDF(v.id)}
-                                    >
-                                        📄 PDF
-                                    </button>
-
+                                    {sel && (
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            className="form-control mt-2"
+                                            value={sel.cantidad}
+                                            onChange={(e)=>cambiarCantidad(p.id,e.target.value)}
+                                        />
+                                    )}
                                 </div>
+                            );
+                        })}
 
-                            ))}
+                        <h4 className="fw-bold mt-4">
+                            Total: <span style={{color:"#16a34a"}}>${totalActual.toFixed(2)}</span>
+                        </h4>
 
-                        </div>
+                        <button
+                            className="btn me-2"
+                            style={{background:"linear-gradient(135deg,#16a34a,#15803d)",color:"#fff"}}
+                            onClick={guardarVenta}
+                            disabled={saving}
+                        >
+                            {saving ? "Guardando..." : "💰 Guardar Venta"}
+                        </button>
+
+                        <button className="btn btn-secondary" onClick={limpiar}>
+                            Limpiar
+                        </button>
                     </div>
+                </div>
 
+                <div className="card shadow-sm border-0" style={{borderRadius:"15px"}}>
+                    <div className="card-body">
+                        <h5 className="fw-semibold mb-3">📄 Historial de Ventas</h5>
+
+                        {ventas.map(v=>(
+                            <div key={v.id} className="mb-3 p-3 shadow-sm" style={{borderRadius:"12px",border:"1px solid #e5e7eb"}}>
+                                <div><b>Paciente:</b> {v.paciente?.nombre}</div>
+                                <div><b>Médico:</b> {v.medico?.nombre}</div>
+                                <div className="fw-bold text-success">${v.total}</div>
+
+                                <button
+                                    className="btn btn-sm mt-2"
+                                    style={{background:"#2563eb",color:"#fff"}}
+                                    onClick={()=>descargarPDF(v.id)}
+                                >
+                                    PDF
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
             </div>
-
-        </div>
+        </Layout>
     );
 }
 
