@@ -18,23 +18,21 @@ class ProductoRequest extends FormRequest
      * Get the validation rules that apply to the request.
      */
     public function rules(): array
-    {
-        return [
+{
+    $rules = [
 
-            'nombre' => 'required|string|max:255',
+        'nombre' => 'required|string|max:255',
+        'codigo' => 'required|string|max:255',
+        'tipo' => 'required|string|max:255',
+        'precio' => 'required|numeric|min:0',
+        'stock' => 'required|integer|min:0',
+        'stock_minimo' => 'nullable|integer|min:0',
+        'categoria_id' => 'required|exists:categorias,id',
+    ];
 
-            'codigo' => 'required|string|max:255',
+    // 👇 SOLO para imagen (MUY IMPORTANTE)
+    $rules['imagen'] = 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048';
 
-            'tipo' => 'required|string|max:255',
-
-            'precio' => 'required|numeric|min:0',
-
-            'stock' => 'required|integer|min:0',
-
-            'stock_minimo' => 'nullable|integer|min:0',
-
-            'categoria_id' => 'required|exists:categorias,id',
-
-        ];
-    }
+    return $rules;
+}
 }

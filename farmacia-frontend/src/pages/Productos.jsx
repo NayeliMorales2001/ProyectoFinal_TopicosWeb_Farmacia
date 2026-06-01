@@ -11,13 +11,13 @@ import {
 
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+const STORAGE_URL = "https://proyectofinal-topicosweb-farmacia-1.onrender.com/storage/";
 
 function Productos() {
 
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [busqueda, setBusqueda] = useState("");
-
     const navigate = useNavigate();
 
     let user = null;
@@ -339,28 +339,20 @@ try {
                                                 <tr key={row.id}>
 
                                                     <td>
-
-                                                        {
-                                                            row.imagen ? (
-
-                                                                <img
-                                                                    src={`http://127.0.0.1:8000/storage/${row.imagen}`}
-                                                                    alt={row.nombre}
-                                                                    width="60"
-                                                                    height="60"
-                                                                    className="rounded object-fit-cover"
-                                                                />
-
-                                                            ) : (
-
-                                                                <span className="text-muted">
-                                                                    Sin imagen
-                                                                </span>
-
-                                                            )
-                                                        }
-
-                                                    </td>
+                                                    {row.imagen ? (
+                                                        <img
+                                                            src={`${STORAGE_URL}${row.imagen}`}
+                                                            alt={row.nombre}
+                                                            width="60"
+                                                            height="60"
+                                                            className="rounded object-fit-cover"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-muted">
+                                                            Sin imagen
+                                                        </span>
+                                                    )}
+                                                </td>
 
                                                     <td>{row.id}</td>
 
