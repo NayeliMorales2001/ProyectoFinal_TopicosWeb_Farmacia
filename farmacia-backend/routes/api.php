@@ -145,10 +145,12 @@ Route::middleware(['role:admin'])->group(function () {
     ]);
 });
 
-Route::middleware('auth:sanctum')->get('/usuario-test', function (\Illuminate\Http\Request $request) {
+
+    Route::middleware('auth:sanctum')->get('/debug-user', function (\Illuminate\Http\Request $request) {
 
     return response()->json([
-        'user' => $request->user()
+        'user' => $request->user(),
+        'roles' => $request->user()?->getRoleNames()
     ]);
 
 });

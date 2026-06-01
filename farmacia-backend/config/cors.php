@@ -6,7 +6,9 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        'https://proyectofinal-topicosweb-farmacia-1-1lev.onrender.com'
+    ],
 
     'allowed_origins_patterns' => [],
 
@@ -17,5 +19,4 @@ return [
     'max_age' => 0,
 
     'supports_credentials' => false,
-
 ];
