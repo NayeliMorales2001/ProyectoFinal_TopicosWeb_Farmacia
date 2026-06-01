@@ -7,20 +7,41 @@ use Illuminate\Database\Eloquent\Model;
 class Venta extends Model
 {
     protected $fillable = [
-        'producto_id',
-        'paciente_id', // 🔥 FALTABA ESTO
-        'cantidad',
-        'precio',
+        'paciente_id',
+        'medico_id',
         'total'
     ];
 
-    public function producto()
-    {
-        return $this->belongsTo(Producto::class);
-    }
-
+    // ==========================
+    // PACIENTE
+    // ==========================
     public function paciente()
     {
-        return $this->belongsTo(Paciente::class);
+        return $this->belongsTo(
+            Paciente::class,
+            'paciente_id'
+        );
+    }
+
+    // ==========================
+    // MEDICO
+    // ==========================
+    public function medico()
+    {
+        return $this->belongsTo(
+            Medico::class,
+            'medico_id'
+        );
+    }
+
+    // ==========================
+    // DETALLES
+    // ==========================
+    public function detalles()
+    {
+        return $this->hasMany(
+            VentaDetalle::class,
+            'venta_id'
+        );
     }
 }

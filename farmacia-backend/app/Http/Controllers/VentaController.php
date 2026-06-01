@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Venta;
+use App\Models\VentaDetalle;
 use App\Models\Producto;
 use App\Models\Auditoria;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class VentaController extends Controller
 {
@@ -16,12 +18,15 @@ class VentaController extends Controller
 
     public function index()
     {
-        return Venta::with(
-            'producto',
-            'paciente'
-        )
-        ->latest()
-        ->paginate(10);
+        return response()->json([
+            'data' => Venta::with([
+                'paciente',
+                'medico',
+                'detalles.producto'
+            ])
+            ->latest()
+            ->get()
+        ]);
     }
 
     // =========================================
@@ -31,95 +36,109 @@ class VentaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-
-            'producto_id' => 'required|exists:productos,id',
-
-            'cantidad' => 'required|integer|min:1',
-
-            'paciente_id' => 'required|exists:pacientes,id'
-
+            'paciente_id' => 'required|exists:pacientes,id',
+            'medico_id' => 'required|exists:medicos,id',
+            'productos' => 'required|array|min:1'
         ]);
 
-        $producto = Producto::findOrFail(
-            $request->producto_id
-        );
+        DB::beginTransaction();
 
-        // =========================================
-        // VALIDAR STOCK
-        // =========================================
+        try {
 
-        if ($producto->stock < $request->cantidad) {
+            $totalVenta = 0;
+
+            foreach ($request->productos as $item) {
+
+                $producto = Producto::findOrFail(
+                    $item['producto_id']
+                );
+
+                if ($producto->stock < $item['cantidad']) {
+
+                    return response()->json([
+                        'message' =>
+                        'Stock insuficiente para ' .
+                        $producto->nombre
+                    ], 400);
+                }
+
+                $totalVenta +=
+                    $producto->precio *
+                    $item['cantidad'];
+            }
+
+            // ==========================
+            // CREAR CABECERA
+            // ==========================
+
+            $venta = Venta::create([
+                'paciente_id' => $request->paciente_id,
+                'medico_id' => $request->medico_id,
+                'total' => $totalVenta
+            ]);
+
+            // ==========================
+            // DETALLES
+            // ==========================
+
+            foreach ($request->productos as $item) {
+
+                $producto = Producto::findOrFail(
+                    $item['producto_id']
+                );
+
+                $subtotal =
+                    $producto->precio *
+                    $item['cantidad'];
+
+                VentaDetalle::create([
+
+                    'venta_id' => $venta->id,
+
+                    'producto_id' => $producto->id,
+
+                    'cantidad' => $item['cantidad'],
+
+                    'precio' => $producto->precio,
+
+                    'subtotal' => $subtotal
+
+                ]);
+
+                $producto->stock -=
+                    $item['cantidad'];
+
+                $producto->save();
+            }
+
+            try {
+
+                Auditoria::create([
+                    'user_id' => auth()->id(),
+                    'accion' => 'CREAR',
+                    'tabla' => 'ventas',
+                    'registro_id' => $venta->id,
+                    'datos_nuevos' => json_encode($venta),
+                    'ip' => request()->ip()
+                ]);
+
+            } catch (\Exception $e) {
+            }
+
+            DB::commit();
 
             return response()->json([
+                'message' => 'Venta registrada correctamente'
+            ], 201);
 
-                'error' => 'Stock insuficiente'
+        } catch (\Exception $e) {
 
-            ], 400);
+            DB::rollBack();
+
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        // =========================================
-        // TOTAL
-        // =========================================
-
-        $total =
-            $producto->precio *
-            $request->cantidad;
-
-        // =========================================
-        // CREAR VENTA
-        // =========================================
-
-        $venta = Venta::create([
-
-            'producto_id' => $producto->id,
-
-            'paciente_id' => $request->paciente_id,
-
-            'cantidad' => $request->cantidad,
-
-            'precio' => $producto->precio,
-
-            'total' => $total
-
-        ]);
-
-        // =========================================
-        // DESCONTAR STOCK
-        // =========================================
-
-        $producto->stock -= $request->cantidad;
-
-        $producto->save();
-
-        // =========================================
-        // AUDITORIA
-        // =========================================
-
-        Auditoria::create([
-
-            'user_id' => auth()->id(),
-
-            'accion' => 'CREAR',
-
-            'tabla' => 'ventas',
-
-            'descripcion' =>
-                'Venta registrada ID: ' . $venta->id,
-
-            'ip' => request()->ip()
-
-        ]);
-
-        return response()->json([
-
-            'message' => 'Venta creada correctamente',
-
-            'data' => $venta->load(
-                'producto',
-                'paciente'
-            )
-
-        ], 201);
     }
 
     // =========================================
@@ -128,15 +147,14 @@ class VentaController extends Controller
 
     public function show($id)
     {
-        $venta = Venta::with(
-            'producto',
-            'paciente'
-        )->findOrFail($id);
+        $venta = Venta::with([
+            'paciente',
+            'medico',
+            'detalles.producto'
+        ])->findOrFail($id);
 
         return response()->json([
-
             'data' => $venta
-
         ]);
     }
 
@@ -146,49 +164,61 @@ class VentaController extends Controller
 
     public function destroy($id)
     {
-        $venta = Venta::findOrFail($id);
+        DB::beginTransaction();
 
-        // =========================================
-        // DEVOLVER STOCK
-        // =========================================
+        try {
 
-        $producto = Producto::find(
-            $venta->producto_id
-        );
+            $venta = Venta::with(
+                'detalles'
+            )->findOrFail($id);
 
-        if ($producto) {
+            foreach ($venta->detalles as $detalle) {
 
-            $producto->stock += $venta->cantidad;
+                $producto = Producto::find(
+                    $detalle->producto_id
+                );
 
-            $producto->save();
+                if ($producto) {
+
+                    $producto->stock +=
+                        $detalle->cantidad;
+
+                    $producto->save();
+                }
+            }
+
+            try {
+
+                Auditoria::create([
+                    'user_id' => auth()->id(),
+                    'accion' => 'ELIMINAR',
+                    'tabla' => 'ventas',
+                    'registro_id' => $venta->id,
+                    'datos_anteriores' => json_encode($venta),
+                    'ip' => request()->ip()
+                ]);
+
+            } catch (\Exception $e) {
+            }
+
+            $venta->detalles()->delete();
+
+            $venta->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Venta eliminada correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        // =========================================
-        // AUDITORIA
-        // =========================================
-
-        Auditoria::create([
-
-            'user_id' => auth()->id(),
-
-            'accion' => 'ELIMINAR',
-
-            'tabla' => 'ventas',
-
-            'descripcion' =>
-                'Venta eliminada ID: ' . $venta->id,
-
-            'ip' => request()->ip()
-
-        ]);
-
-        $venta->delete();
-
-        return response()->json([
-
-            'message' => 'Venta eliminada correctamente'
-
-        ]);
     }
 
     // =========================================
@@ -197,10 +227,11 @@ class VentaController extends Controller
 
     public function pdf($id)
     {
-        $venta = Venta::with(
-            'producto',
-            'paciente'
-        )->findOrFail($id);
+        $venta = Venta::with([
+            'paciente',
+            'medico',
+            'detalles.producto'
+        ])->findOrFail($id);
 
         $pdf = Pdf::loadView(
             'pdf.receta',
@@ -208,7 +239,7 @@ class VentaController extends Controller
         );
 
         return $pdf->download(
-            'venta_'.$venta->id.'.pdf'
+            'venta_' . $venta->id . '.pdf'
         );
     }
 
@@ -218,15 +249,14 @@ class VentaController extends Controller
 
     public function historial()
     {
-        $ventas = Venta::with(
-            'producto',
-            'paciente'
-        )
-        ->latest()
-        ->paginate(10);
-
-        return response()->json($ventas);
+        return response()->json([
+            'data' => Venta::with([
+                'paciente',
+                'medico',
+                'detalles.producto'
+            ])
+            ->latest()
+            ->get()
+        ]);
     }
-
-
 }

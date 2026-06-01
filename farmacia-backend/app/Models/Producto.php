@@ -46,11 +46,11 @@ class Producto extends Model
     // =========================================
     // RELACION VENTAS
     // =========================================
-    public function ventas()
-    {
-        return $this->hasMany(
-            Venta::class,
-            'producto_id'
-        );
-    }
+    public function detallesVenta()
+{
+    return $this->hasMany(
+        VentaDetalle::class,
+        'producto_id'
+    );
+}
 }

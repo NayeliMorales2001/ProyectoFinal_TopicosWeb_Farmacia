@@ -4,30 +4,18 @@ import Swal from "sweetalert2";
 
 function Ventas() {
 
-    const [ventas, setVentas] = useState([]);
-
     const [productos, setProductos] = useState([]);
     const [pacientes, setPacientes] = useState([]);
     const [medicos, setMedicos] = useState([]);
+    const [ventas, setVentas] = useState([]);
 
-    // 🔥 MULTI PRODUCTOS
     const [productosSeleccionados, setProductosSeleccionados] = useState([]);
 
     const [pacienteId, setPacienteId] = useState("");
     const [medicoId, setMedicoId] = useState("");
 
-    const [cantidad, setCantidad] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-
-    let user = null;
-
-    try {
-        const storedUser = localStorage.getItem("user");
-        user = storedUser ? JSON.parse(storedUser) : null;
-    } catch {
-        user = null;
-    }
 
     // =========================
     // CARGAR DATOS
@@ -51,7 +39,7 @@ function Ventas() {
 
         } catch (error) {
             console.log(error);
-            Swal.fire("Error", "No se pudieron cargar datos", "error");
+            Swal.fire("Error", "Error cargando datos", "error");
         } finally {
             setLoading(false);
         }
@@ -62,30 +50,38 @@ function Ventas() {
     }, []);
 
     // =========================
-    // SELECCIONAR PRODUCTOS (CHECKBOX)
+    // SELECCIONAR PRODUCTO
     // =========================
     const toggleProducto = (producto) => {
+        setProductosSeleccionados(prev => {
+            const existe = prev.find(p => p.id === producto.id);
 
-        const existe = productosSeleccionados.find(p => p.id === producto.id);
+            if (existe) {
+                return prev.filter(p => p.id !== producto.id);
+            }
 
-        if (existe) {
-            setProductosSeleccionados(
-                productosSeleccionados.filter(p => p.id !== producto.id)
-            );
-        } else {
-            setProductosSeleccionados([
-                ...productosSeleccionados,
-                { ...producto, cantidad: 1 }
-            ]);
-        }
+            return [
+                ...prev,
+                {
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    precio: producto.precio,
+                    cantidad: 1
+                }
+            ];
+        });
     };
 
-    // cambiar cantidad por producto
+    // =========================
+    // CAMBIAR CANTIDAD
+    // =========================
     const cambiarCantidad = (id, value) => {
+        const cantidad = Number(value);
+
         setProductosSeleccionados(prev =>
             prev.map(p =>
                 p.id === id
-                    ? { ...p, cantidad: Number(value) }
+                    ? { ...p, cantidad: cantidad > 0 ? cantidad : 1 }
                     : p
             )
         );
@@ -98,7 +94,6 @@ function Ventas() {
         setProductosSeleccionados([]);
         setPacienteId("");
         setMedicoId("");
-        setCantidad("");
     };
 
     // =========================
@@ -111,46 +106,36 @@ function Ventas() {
         }
 
         try {
-
             setSaving(true);
 
-            // 🔥 enviamos múltiples productos
             const data = {
                 paciente_id: pacienteId,
                 medico_id: medicoId,
                 productos: productosSeleccionados.map(p => ({
                     producto_id: p.id,
-                    cantidad: p.cantidad,
-                    precio: p.precio
+                    cantidad: p.cantidad
                 }))
             };
 
             await api.post("/ventas", data);
 
-            Swal.fire("Éxito", "Venta registrada", "success");
+            Swal.fire("Éxito", "Venta registrada correctamente", "success");
 
             limpiar();
             cargar();
 
         } catch (error) {
             console.log(error);
+
             Swal.fire(
                 "Error",
-                error.response?.data?.message || "Error al guardar",
+                error.response?.data?.message || "Error al guardar venta",
                 "error"
             );
         } finally {
             setSaving(false);
         }
     };
-
-    // =========================
-    // TOTAL
-    // =========================
-    const total = productosSeleccionados.reduce(
-        (acc, p) => acc + (p.precio * (p.cantidad || 1)),
-        0
-    );
 
     if (loading) {
         return <p className="text-center p-5">Cargando...</p>;
@@ -167,7 +152,7 @@ function Ventas() {
                 value={pacienteId}
                 onChange={(e) => setPacienteId(e.target.value)}
             >
-                <option value="">Paciente</option>
+                <option value="">Selecciona paciente</option>
                 {pacientes.map(p => (
                     <option key={p.id} value={p.id}>
                         {p.nombre}
@@ -181,7 +166,7 @@ function Ventas() {
                 value={medicoId}
                 onChange={(e) => setMedicoId(e.target.value)}
             >
-                <option value="">Médico</option>
+                <option value="">Selecciona médico</option>
                 {medicos.map(m => (
                     <option key={m.id} value={m.id}>
                         {m.nombre}
@@ -189,11 +174,10 @@ function Ventas() {
                 ))}
             </select>
 
-            {/* PRODUCTOS MULTI CHECKBOX */}
+            {/* PRODUCTOS */}
             <h5>Productos</h5>
 
             {productos.map(p => {
-
                 const seleccionado = productosSeleccionados.find(x => x.id === p.id);
 
                 return (
@@ -212,6 +196,7 @@ function Ventas() {
                             <input
                                 type="number"
                                 min="1"
+                                max={p.stock}
                                 className="form-control mt-2"
                                 value={seleccionado.cantidad}
                                 onChange={(e) =>
@@ -224,8 +209,7 @@ function Ventas() {
                 );
             })}
 
-            <h4>Total: ${total.toFixed(2)}</h4>
-
+            {/* BOTONES */}
             <button
                 className="btn btn-success mt-3"
                 onClick={guardarVenta}
@@ -234,7 +218,10 @@ function Ventas() {
                 {saving ? "Guardando..." : "Guardar venta"}
             </button>
 
-            <button className="btn btn-secondary ms-2" onClick={limpiar}>
+            <button
+                className="btn btn-secondary ms-2 mt-3"
+                onClick={limpiar}
+            >
                 Limpiar
             </button>
 
