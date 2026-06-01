@@ -14,6 +14,10 @@ return new class extends Migration
                 ->nullable()
                 ->after('especialidad');
         });
+
+        Schema::table('medicos', function (Blueprint $table) {
+    $table->string('telefono')->nullable();
+});
     }
 
     public function down(): void
