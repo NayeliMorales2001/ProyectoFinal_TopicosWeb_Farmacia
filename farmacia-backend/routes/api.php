@@ -137,3 +137,10 @@ Route::middleware(['role:admin'])->group(function () {
     Route::apiResource('pacientes', PacienteController::class);
 
     });
+
+    Route::get('/test', function () {
+    return response()->json([
+        'status' => 'ok',
+        'message' => 'API funcionando correctamente'
+    ]);
+});
