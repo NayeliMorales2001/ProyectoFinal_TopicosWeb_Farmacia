@@ -256,9 +256,9 @@ const registrar = async ()=>{
                     {/* CAPTCHA */}
                     <div className="d-flex justify-content-center mb-3">
                         <ReCAPTCHA
-                        sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                        onChange={(val)=>setCaptcha(val)}
-                        />
+                    sitekey="6LcUiuwsAAAAADzrJ1M-14hFRrZLc5b61rrRkLOs"
+                    onChange={(val)=>setCaptcha(val)}
+                />
                     </div>
 
                     {/* BOTON */}
