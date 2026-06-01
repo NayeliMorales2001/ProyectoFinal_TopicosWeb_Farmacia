@@ -80,101 +80,50 @@ function Medicos() {
     // =========================================
     // VALIDAR
     // =========================================
+const validar = (data) => {
 
-    const validar = (data) => {
+    if (
+        !data.nombre?.trim() ||
+        !data.especialidad?.trim() ||
+        !data.telefono?.trim() ||
+        !data.cedula?.trim()
+    ) {
+        Swal.fire("Error", "Todos los campos son obligatorios", "warning");
+        return false;
+    }
 
-        if (
-            !data.nombre?.trim() ||
-            !data.especialidad?.trim() ||
-            !data.telefono?.trim() ||
-            !data.cedula?.trim()
-        ) {
+    if (!soloLetras.test(data.nombre)) {
+        Swal.fire("Error", "Nombre inválido", "warning");
+        return false;
+    }
 
-            Swal.fire(
-                "Error",
-                "Todos los campos son obligatorios",
-                "warning"
-            );
+    if (!soloLetras.test(data.especialidad)) {
+        Swal.fire("Error", "Especialidad inválida", "warning");
+        return false;
+    }
 
-            return false;
+    if (!soloNumeros.test(data.telefono)) {
+        Swal.fire("Error", "El teléfono solo acepta números", "warning");
+        return false;
+    }
 
-        }
+    if (data.telefono.length < 8) {
+        Swal.fire("Error", "El teléfono es demasiado corto", "warning");
+        return false;
+    }
 
-        if (!soloLetras.test(data.nombre)) {
+    if (!soloNumeros.test(data.cedula)) {
+        Swal.fire("Error", "La cédula solo acepta números", "warning");
+        return false;
+    }
 
-            Swal.fire(
-                "Error",
-                "Nombre inválido",
-                "warning"
-            );
+    if (data.cedula.length < 6) {
+        Swal.fire("Error", "La cédula debe contener al menos 6 números", "warning");
+        return false;
+    }
 
-            return false;
-
-        }
-
-        if (!soloLetras.test(data.especialidad)) {
-
-            Swal.fire(
-                "Error",
-                "Especialidad inválida",
-                "warning"
-            );
-
-            return false;
-
-        }
-
-        if (!soloNumeros.test(data.telefono)) {
-
-            Swal.fire(
-                "Error",
-                "El teléfono solo acepta números",
-                "warning"
-            );
-
-            return false;
-
-        }
-
-        if (data.telefono.length < 8) {
-
-            Swal.fire(
-                "Error",
-                "El teléfono es demasiado corto",
-                "warning"
-            );
-
-            return false;
-
-        }
-
-        if (!soloNumeros.test(data.cedula)) {
-
-    Swal.fire(
-        "Error",
-        "La cédula solo acepta números",
-        "warning"
-    );
-
-    return false;
-
-}
-
-if (data.cedula.length < 6) {
-
-    Swal.fire(
-        "Error",
-        "La cédula debe contener al menos 6 números",
-        "warning"
-    );
-
-    return false;
-
-}
-
-return true;
+    return true;
 };
-}
 
     
 
