@@ -1,8 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
-
+import { Link, useLocation, useNavigate } from "react-router-dom";
 function Sidebar() {
 
     const location = useLocation();
+    const navigate = useNavigate();
 
     // =====================================
     // USER SAFE
@@ -28,13 +28,13 @@ function Sidebar() {
     // =====================================
     const logout = () => {
 
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("rol");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("rol");
 
-        window.location.href = "/login";
+    navigate("/login");
 
-    };
+};
 
     // =====================================
     // MENU
