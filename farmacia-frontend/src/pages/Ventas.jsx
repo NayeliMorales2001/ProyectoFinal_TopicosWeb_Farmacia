@@ -4,6 +4,9 @@ import Swal from "sweetalert2";
 
 function Ventas() {
 
+    // =========================
+    // STATES
+    // =========================
     const [productos, setProductos] = useState([]);
     const [pacientes, setPacientes] = useState([]);
     const [medicos, setMedicos] = useState([]);
@@ -38,7 +41,8 @@ function Ventas() {
             setVentas(ventasRes.data.data || []);
 
         } catch (error) {
-            Swal.fire("Error", "Error cargando datos", "error");
+            console.log(error);
+            Swal.fire("Error", "No se pudieron cargar datos", "error");
         } finally {
             setLoading(false);
         }
@@ -52,27 +56,42 @@ function Ventas() {
     // TOGGLE PRODUCTO
     // =========================
     const toggleProducto = (producto) => {
-        setProductosSeleccionados(prev => {
-            const existe = prev.find(p => p.id === producto.id);
 
-            if (existe) {
-                return prev.filter(p => p.id !== producto.id);
-            }
+        const existe = productosSeleccionados.find(p => p.id === producto.id);
 
-            return [...prev, { ...producto, cantidad: 1 }];
-        });
+        if (existe) {
+            setProductosSeleccionados(
+                productosSeleccionados.filter(p => p.id !== producto.id)
+            );
+        } else {
+            setProductosSeleccionados([
+                ...productosSeleccionados,
+                {
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    precio: producto.precio,
+                    cantidad: 1
+                }
+            ]);
+        }
     };
 
+    // =========================
+    // CAMBIAR CANTIDAD
+    // =========================
     const cambiarCantidad = (id, value) => {
         setProductosSeleccionados(prev =>
             prev.map(p =>
                 p.id === id
-                    ? { ...p, cantidad: Math.max(1, Number(value)) }
+                    ? { ...p, cantidad: Number(value) }
                     : p
             )
         );
     };
 
+    // =========================
+    // LIMPIAR
+    // =========================
     const limpiar = () => {
         setProductosSeleccionados([]);
         setPacienteId("");
@@ -80,7 +99,7 @@ function Ventas() {
     };
 
     // =========================
-    // GUARDAR
+    // GUARDAR VENTA
     // =========================
     const guardarVenta = async () => {
 
@@ -102,15 +121,16 @@ function Ventas() {
 
             await api.post("/ventas", data);
 
-            Swal.fire("Éxito", "Venta registrada", "success");
+            Swal.fire("Éxito", "Venta registrada correctamente", "success");
 
             limpiar();
             cargar();
 
         } catch (error) {
+            console.log(error);
             Swal.fire(
                 "Error",
-                error.response?.data?.message || "Error",
+                error.response?.data?.message || "Error al guardar",
                 "error"
             );
         } finally {
@@ -118,6 +138,16 @@ function Ventas() {
         }
     };
 
+    // =========================
+    // PDF
+    // =========================
+    const descargarPDF = (id) => {
+        window.open(`${api.defaults.baseURL}/ventas/pdf/${id}`, "_blank");
+    };
+
+    // =========================
+    // TOTAL
+    // =========================
     const totalActual = productosSeleccionados.reduce(
         (acc, p) => acc + (p.precio * p.cantidad),
         0
@@ -137,184 +167,133 @@ function Ventas() {
             {/* HEADER */}
             <div className="mb-4">
                 <h2 className="fw-bold">💰 Ventas</h2>
-                <p className="text-muted">
-                    Sistema de registro de ventas farmacia
-                </p>
+                <p className="text-muted">Registro de ventas farmacia</p>
             </div>
 
             <div className="row g-4">
 
-                {/* IZQUIERDA - FORM */}
+                {/* FORM */}
                 <div className="col-lg-8">
-
                     <div className="card shadow-sm border-0 rounded-4">
                         <div className="card-body">
 
-                            <h4 className="fw-bold mb-4">🛒 Nueva venta</h4>
+                            <h4 className="fw-bold mb-3">🛒 Nueva venta</h4>
 
-                            {/* PACIENTE Y MÉDICO */}
-                            <div className="row g-3">
+                            {/* PACIENTE */}
+                            <select
+                                className="form-select mb-3"
+                                value={pacienteId}
+                                onChange={(e) => setPacienteId(e.target.value)}
+                            >
+                                <option value="">Selecciona paciente</option>
+                                {pacientes.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.nombre}
+                                    </option>
+                                ))}
+                            </select>
 
-                                <div className="col-md-6">
-                                    <label className="form-label fw-semibold">
-                                        👤 Paciente
-                                    </label>
-
-                                    <select
-                                        className="form-select"
-                                        value={pacienteId}
-                                        onChange={(e) => setPacienteId(e.target.value)}
-                                    >
-                                        <option value="">Seleccionar paciente</option>
-                                        {pacientes.map(p => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.nombre}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="col-md-6">
-                                    <label className="form-label fw-semibold">
-                                        🩺 Médico
-                                    </label>
-
-                                    <select
-                                        className="form-select"
-                                        value={medicoId}
-                                        onChange={(e) => setMedicoId(e.target.value)}
-                                    >
-                                        <option value="">Seleccionar médico</option>
-                                        {medicos.map(m => (
-                                            <option key={m.id} value={m.id}>
-                                                {m.nombre}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                            </div>
+                            {/* MÉDICO */}
+                            <select
+                                className="form-select mb-3"
+                                value={medicoId}
+                                onChange={(e) => setMedicoId(e.target.value)}
+                            >
+                                <option value="">Selecciona médico</option>
+                                {medicos.map(m => (
+                                    <option key={m.id} value={m.id}>
+                                        {m.nombre}
+                                    </option>
+                                ))}
+                            </select>
 
                             {/* PRODUCTOS */}
-                            <hr className="my-4" />
+                            <h5>Productos</h5>
 
-                            <h5 className="fw-bold mb-3">📦 Productos</h5>
+                            {productos.map(p => {
 
-                            <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                                const sel = productosSeleccionados.find(x => x.id === p.id);
 
-                                {productos.map(p => {
-                                    const sel = productosSeleccionados.find(x => x.id === p.id);
+                                return (
+                                    <div key={p.id} className="border p-2 mb-2 rounded">
 
-                                    return (
-                                        <div
-                                            key={p.id}
-                                            className={`p-3 mb-2 rounded border d-flex justify-content-between align-items-center ${sel ? "bg-light" : ""}`}
-                                        >
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!sel}
+                                                onChange={() => toggleProducto(p)}
+                                            />{" "}
+                                            {p.nombre} - ${p.precio} (Stock: {p.stock})
+                                        </label>
 
-                                            <div>
-                                                <input
-                                                    type="checkbox"
-                                                    className="form-check-input me-2"
-                                                    checked={!!sel}
-                                                    onChange={() => toggleProducto(p)}
-                                                />
+                                        {sel && (
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                className="form-control mt-2"
+                                                value={sel.cantidad}
+                                                onChange={(e) =>
+                                                    cambiarCantidad(p.id, e.target.value)
+                                                }
+                                            />
+                                        )}
 
-                                                <span className="fw-semibold">
-                                                    {p.nombre}
-                                                </span>
+                                    </div>
+                                );
+                            })}
 
-                                                <div className="text-muted small">
-                                                    Stock: {p.stock} | ${p.precio}
-                                                </div>
-                                            </div>
+                            <h4 className="mt-3 text-success">
+                                Total: ${totalActual.toFixed(2)}
+                            </h4>
 
-                                            {sel && (
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    className="form-control"
-                                                    style={{ width: "90px" }}
-                                                    value={sel.cantidad}
-                                                    onChange={(e) =>
-                                                        cambiarCantidad(p.id, e.target.value)
-                                                    }
-                                                />
-                                            )}
+                            <button
+                                className="btn btn-success mt-2"
+                                onClick={guardarVenta}
+                                disabled={saving}
+                            >
+                                {saving ? "Guardando..." : "Guardar venta"}
+                            </button>
 
-                                        </div>
-                                    );
-                                })}
-
-                            </div>
-
-                            {/* TOTAL + BOTONES */}
-                            <div className="mt-4 d-flex justify-content-between align-items-center">
-
-                                <h4 className="text-success fw-bold">
-                                    Total: ${totalActual.toFixed(2)}
-                                </h4>
-
-                                <div className="d-flex gap-2">
-
-                                    <button
-                                        className="btn btn-success"
-                                        onClick={guardarVenta}
-                                        disabled={saving}
-                                    >
-                                        {saving ? "Guardando..." : "💾 Guardar"}
-                                    </button>
-
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={limpiar}
-                                    >
-                                        Limpiar
-                                    </button>
-
-                                </div>
-
-                            </div>
+                            <button
+                                className="btn btn-secondary mt-2 ms-2"
+                                onClick={limpiar}
+                            >
+                                Limpiar
+                            </button>
 
                         </div>
                     </div>
-
                 </div>
 
-                {/* DERECHA - HISTORIAL */}
+                {/* HISTORIAL */}
                 <div className="col-lg-4">
 
                     <div className="card shadow-sm border-0 rounded-4">
                         <div className="card-body">
 
-                            <h5 className="fw-bold mb-3">📋 Historial</h5>
+                            <h5 className="fw-bold">📋 Historial</h5>
 
-                            <div style={{ maxHeight: "600px", overflowY: "auto" }}>
+                            {ventas.map(v => (
 
-                                {ventas.length > 0 ? (
-                                    ventas.map(v => (
-                                        <div key={v.id} className="border rounded p-2 mb-2">
+                                <div key={v.id} className="border p-2 mb-2 rounded">
 
-                                            <div className="fw-semibold">
-                                                {v.paciente?.nombre}
-                                            </div>
+                                    <div><b>Paciente:</b> {v.paciente?.nombre}</div>
+                                    <div><b>Médico:</b> {v.medico?.nombre}</div>
 
-                                            <small className="text-muted">
-                                                {v.medico?.nombre}
-                                            </small>
+                                    <div className="text-success fw-bold">
+                                        ${v.total}
+                                    </div>
 
-                                            <div className="text-success fw-bold">
-                                                ${Number(v.total).toFixed(2)}
-                                            </div>
+                                    <button
+                                        className="btn btn-sm btn-danger mt-2"
+                                        onClick={() => descargarPDF(v.id)}
+                                    >
+                                        📄 PDF
+                                    </button>
 
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-muted text-center">
-                                        Sin ventas
-                                    </p>
-                                )}
+                                </div>
 
-                            </div>
+                            ))}
 
                         </div>
                     </div>
