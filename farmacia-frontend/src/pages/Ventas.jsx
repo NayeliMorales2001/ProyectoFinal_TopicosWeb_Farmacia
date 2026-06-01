@@ -38,7 +38,6 @@ function Ventas() {
             setVentas(ventasRes.data.data || []);
 
         } catch (error) {
-            console.log(error);
             Swal.fire("Error", "Error cargando datos", "error");
         } finally {
             setLoading(false);
@@ -50,7 +49,7 @@ function Ventas() {
     }, []);
 
     // =========================
-    // SELECCIONAR PRODUCTO
+    // TOGGLE PRODUCTO
     // =========================
     const toggleProducto = (producto) => {
         setProductosSeleccionados(prev => {
@@ -60,37 +59,20 @@ function Ventas() {
                 return prev.filter(p => p.id !== producto.id);
             }
 
-            return [
-                ...prev,
-                {
-                    id: producto.id,
-                    nombre: producto.nombre,
-                    precio: producto.precio,
-                    stock: producto.stock,
-                    cantidad: 1
-                }
-            ];
+            return [...prev, { ...producto, cantidad: 1 }];
         });
     };
 
-    // =========================
-    // CAMBIAR CANTIDAD
-    // =========================
     const cambiarCantidad = (id, value) => {
-        const cantidad = Number(value);
-
         setProductosSeleccionados(prev =>
             prev.map(p =>
                 p.id === id
-                    ? { ...p, cantidad: cantidad > 0 ? cantidad : 1 }
+                    ? { ...p, cantidad: Math.max(1, Number(value)) }
                     : p
             )
         );
     };
 
-    // =========================
-    // LIMPIAR
-    // =========================
     const limpiar = () => {
         setProductosSeleccionados([]);
         setPacienteId("");
@@ -98,7 +80,7 @@ function Ventas() {
     };
 
     // =========================
-    // GUARDAR VENTA
+    // GUARDAR
     // =========================
     const guardarVenta = async () => {
 
@@ -120,31 +102,21 @@ function Ventas() {
 
             await api.post("/ventas", data);
 
-            Swal.fire("Éxito", "Venta registrada correctamente", "success");
+            Swal.fire("Éxito", "Venta registrada", "success");
 
             limpiar();
             cargar();
 
         } catch (error) {
-            console.log(error);
-
             Swal.fire(
                 "Error",
-                error.response?.data?.message || "Error al guardar venta",
+                error.response?.data?.message || "Error",
                 "error"
             );
         } finally {
             setSaving(false);
         }
     };
-
-    // =========================
-    // TOTAL GENERAL
-    // =========================
-    const totalVentas = ventas.reduce(
-        (acc, v) => acc + Number(v.total || 0),
-        0
-    );
 
     const totalActual = productosSeleccionados.reduce(
         (acc, p) => acc + (p.precio * p.cantidad),
@@ -163,180 +135,192 @@ function Ventas() {
         <div className="container-fluid py-4">
 
             {/* HEADER */}
-            <div className="d-flex justify-content-between align-items-center mb-4">
-
-                <div>
-                    <h2 className="fw-bold">💰 Ventas</h2>
-                    <p className="text-muted mb-0">
-                        Total histórico: ${totalVentas.toFixed(2)}
-                    </p>
-                </div>
-
+            <div className="mb-4">
+                <h2 className="fw-bold">💰 Ventas</h2>
+                <p className="text-muted">
+                    Sistema de registro de ventas farmacia
+                </p>
             </div>
 
-            {/* FORM */}
-            <div className="card border-0 shadow-sm rounded-4 mb-4">
-                <div className="card-body">
+            <div className="row g-4">
 
-                    <h4 className="fw-bold mb-4">🛒 Nueva venta</h4>
+                {/* IZQUIERDA - FORM */}
+                <div className="col-lg-8">
 
-                    <div className="row g-3">
+                    <div className="card shadow-sm border-0 rounded-4">
+                        <div className="card-body">
 
-                        {/* PACIENTE */}
-                        <div className="col-md-4">
-                            <label className="form-label">Paciente</label>
-                            <select
-                                className="form-select"
-                                value={pacienteId}
-                                onChange={(e) => setPacienteId(e.target.value)}
-                            >
-                                <option value="">Selecciona</option>
-                                {pacientes.map(p => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.nombre}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                            <h4 className="fw-bold mb-4">🛒 Nueva venta</h4>
 
-                        {/* MÉDICO */}
-                        <div className="col-md-4">
-                            <label className="form-label">Médico</label>
-                            <select
-                                className="form-select"
-                                value={medicoId}
-                                onChange={(e) => setMedicoId(e.target.value)}
-                            >
-                                <option value="">Selecciona</option>
-                                {medicos.map(m => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.nombre}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                            {/* PACIENTE Y MÉDICO */}
+                            <div className="row g-3">
 
-                        {/* TOTAL */}
-                        <div className="col-md-4">
-                            <label className="form-label">Total actual</label>
-                            <input
-                                className="form-control"
-                                value={`$${totalActual.toFixed(2)}`}
-                                readOnly
-                            />
-                        </div>
+                                <div className="col-md-6">
+                                    <label className="form-label fw-semibold">
+                                        👤 Paciente
+                                    </label>
 
-                    </div>
+                                    <select
+                                        className="form-select"
+                                        value={pacienteId}
+                                        onChange={(e) => setPacienteId(e.target.value)}
+                                    >
+                                        <option value="">Seleccionar paciente</option>
+                                        {pacientes.map(p => (
+                                            <option key={p.id} value={p.id}>
+                                                {p.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                    {/* PRODUCTOS */}
-                    <h5 className="mt-4">Productos</h5>
+                                <div className="col-md-6">
+                                    <label className="form-label fw-semibold">
+                                        🩺 Médico
+                                    </label>
 
-                    {productos.map(p => {
-                        const seleccionado = productosSeleccionados.find(x => x.id === p.id);
-
-                        return (
-                            <div key={p.id} className="border p-2 mb-2 rounded">
-
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={!!seleccionado}
-                                        onChange={() => toggleProducto(p)}
-                                    />{" "}
-                                    {p.nombre} - ${p.precio} (Stock: {p.stock})
-                                </label>
-
-                                {seleccionado && (
-                                    <input
-                                        type="number"
-                                        className="form-control mt-2"
-                                        min="1"
-                                        max={p.stock}
-                                        value={seleccionado.cantidad}
-                                        onChange={(e) =>
-                                            cambiarCantidad(p.id, e.target.value)
-                                        }
-                                    />
-                                )}
+                                    <select
+                                        className="form-select"
+                                        value={medicoId}
+                                        onChange={(e) => setMedicoId(e.target.value)}
+                                    >
+                                        <option value="">Seleccionar médico</option>
+                                        {medicos.map(m => (
+                                            <option key={m.id} value={m.id}>
+                                                {m.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
 
                             </div>
-                        );
-                    })}
 
-                    {/* BOTONES */}
-                    <div className="mt-3 d-flex gap-2">
+                            {/* PRODUCTOS */}
+                            <hr className="my-4" />
 
-                        <button
-                            className="btn btn-success"
-                            onClick={guardarVenta}
-                            disabled={saving}
-                        >
-                            {saving ? "Guardando..." : "Guardar venta"}
-                        </button>
+                            <h5 className="fw-bold mb-3">📦 Productos</h5>
 
-                        <button
-                            className="btn btn-secondary"
-                            onClick={limpiar}
-                        >
-                            Limpiar
-                        </button>
+                            <div style={{ maxHeight: "300px", overflowY: "auto" }}>
 
+                                {productos.map(p => {
+                                    const sel = productosSeleccionados.find(x => x.id === p.id);
+
+                                    return (
+                                        <div
+                                            key={p.id}
+                                            className={`p-3 mb-2 rounded border d-flex justify-content-between align-items-center ${sel ? "bg-light" : ""}`}
+                                        >
+
+                                            <div>
+                                                <input
+                                                    type="checkbox"
+                                                    className="form-check-input me-2"
+                                                    checked={!!sel}
+                                                    onChange={() => toggleProducto(p)}
+                                                />
+
+                                                <span className="fw-semibold">
+                                                    {p.nombre}
+                                                </span>
+
+                                                <div className="text-muted small">
+                                                    Stock: {p.stock} | ${p.precio}
+                                                </div>
+                                            </div>
+
+                                            {sel && (
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    className="form-control"
+                                                    style={{ width: "90px" }}
+                                                    value={sel.cantidad}
+                                                    onChange={(e) =>
+                                                        cambiarCantidad(p.id, e.target.value)
+                                                    }
+                                                />
+                                            )}
+
+                                        </div>
+                                    );
+                                })}
+
+                            </div>
+
+                            {/* TOTAL + BOTONES */}
+                            <div className="mt-4 d-flex justify-content-between align-items-center">
+
+                                <h4 className="text-success fw-bold">
+                                    Total: ${totalActual.toFixed(2)}
+                                </h4>
+
+                                <div className="d-flex gap-2">
+
+                                    <button
+                                        className="btn btn-success"
+                                        onClick={guardarVenta}
+                                        disabled={saving}
+                                    >
+                                        {saving ? "Guardando..." : "💾 Guardar"}
+                                    </button>
+
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={limpiar}
+                                    >
+                                        Limpiar
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
                     </div>
 
                 </div>
-            </div>
 
-            {/* TABLA HISTORIAL */}
-            <div className="card border-0 shadow-sm rounded-4">
-                <div className="card-body">
+                {/* DERECHA - HISTORIAL */}
+                <div className="col-lg-4">
 
-                    <h4 className="fw-bold mb-4">📋 Historial de ventas</h4>
+                    <div className="card shadow-sm border-0 rounded-4">
+                        <div className="card-body">
 
-                    <div className="table-responsive">
+                            <h5 className="fw-bold mb-3">📋 Historial</h5>
 
-                        <table className="table table-hover">
-
-                            <thead className="table-light">
-                                <tr>
-                                    <th>Paciente</th>
-                                    <th>Médico</th>
-                                    <th>Total</th>
-                                    <th>Fecha</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
+                            <div style={{ maxHeight: "600px", overflowY: "auto" }}>
 
                                 {ventas.length > 0 ? (
                                     ventas.map(v => (
-                                        <tr key={v.id}>
-                                            <td>{v.paciente?.nombre}</td>
-                                            <td>{v.medico?.nombre}</td>
-                                            <td className="text-success fw-bold">
+                                        <div key={v.id} className="border rounded p-2 mb-2">
+
+                                            <div className="fw-semibold">
+                                                {v.paciente?.nombre}
+                                            </div>
+
+                                            <small className="text-muted">
+                                                {v.medico?.nombre}
+                                            </small>
+
+                                            <div className="text-success fw-bold">
                                                 ${Number(v.total).toFixed(2)}
-                                            </td>
-                                            <td>
-                                                {v.created_at
-                                                    ? new Date(v.created_at).toLocaleDateString()
-                                                    : "—"}
-                                            </td>
-                                        </tr>
+                                            </div>
+
+                                        </div>
                                     ))
                                 ) : (
-                                    <tr>
-                                        <td colSpan="4" className="text-center">
-                                            Sin ventas
-                                        </td>
-                                    </tr>
+                                    <p className="text-muted text-center">
+                                        Sin ventas
+                                    </p>
                                 )}
 
-                            </tbody>
+                            </div>
 
-                        </table>
-
+                        </div>
                     </div>
 
                 </div>
+
             </div>
 
         </div>
