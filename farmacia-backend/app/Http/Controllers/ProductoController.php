@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Producto;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ProductosExport;
 use App\Http\Requests\ProductoRequest;
@@ -21,27 +22,56 @@ class ProductoController extends Controller
 
     public function store(ProductoRequest $request)
     {
-        $imagen = null;
+        try {
 
-        if ($request->hasFile('imagen')) {
-            $imagen = $request->file('imagen')->store('productos', 'public');
+            $imagen = null;
+
+            if ($request->hasFile('imagen')) {
+
+                $imagen = $request
+                    ->file('imagen')
+                    ->store('productos', 'public');
+            }
+
+            $producto = Producto::create([
+
+                'nombre' => strip_tags($request->nombre),
+
+                'codigo' => strip_tags($request->codigo),
+
+                'tipo' => strip_tags($request->tipo),
+
+                'precio' => $request->precio,
+
+                'stock' => $request->stock,
+
+                'stock_minimo' => $request->stock_minimo ?? 0,
+
+                'categoria_id' => $request->categoria_id,
+
+                'imagen' => $imagen
+            ]);
+
+            return response()->json([
+
+                'message' => 'Producto creado correctamente',
+
+                'data' => $producto->load('categoria')
+
+            ], 201);
+
+        } catch (\Exception $e) {
+
+            Log::error('ERROR CREANDO PRODUCTO: ' . $e->getMessage());
+
+            return response()->json([
+
+                'message' => 'Error al crear producto',
+
+                'error' => $e->getMessage()
+
+            ], 500);
         }
-
-        $producto = Producto::create([
-            'nombre' => strip_tags($request->nombre),
-            'codigo' => strip_tags($request->codigo),
-            'tipo' => strip_tags($request->tipo),
-            'precio' => $request->precio,
-            'stock' => $request->stock,
-            'stock_minimo' => $request->stock_minimo ?? 0,
-            'categoria_id' => $request->categoria_id,
-            'imagen' => $imagen
-        ]);
-
-        return response()->json([
-            'message' => 'Producto creado correctamente',
-            'data' => $producto->load('categoria')
-        ], 201);
     }
 
     public function show($id)
@@ -53,48 +83,94 @@ class ProductoController extends Controller
 
     public function update(ProductoRequest $request, $id)
     {
-        $producto = Producto::findOrFail($id);
+        try {
 
-        $data = [
-            'nombre' => strip_tags($request->nombre),
-            'codigo' => strip_tags($request->codigo),
-            'tipo' => strip_tags($request->tipo),
-            'precio' => $request->precio,
-            'stock' => $request->stock,
-            'stock_minimo' => $request->stock_minimo ?? 0,
-            'categoria_id' => $request->categoria_id,
-        ];
+            $producto = Producto::findOrFail($id);
 
-        if ($request->hasFile('imagen')) {
+            $data = [
 
-            if ($producto->imagen) {
-                Storage::disk('public')->delete($producto->imagen);
+                'nombre' => strip_tags($request->nombre),
+
+                'codigo' => strip_tags($request->codigo),
+
+                'tipo' => strip_tags($request->tipo),
+
+                'precio' => $request->precio,
+
+                'stock' => $request->stock,
+
+                'stock_minimo' => $request->stock_minimo ?? 0,
+
+                'categoria_id' => $request->categoria_id,
+            ];
+
+            if ($request->hasFile('imagen')) {
+
+                if ($producto->imagen) {
+
+                    Storage::disk('public')
+                        ->delete($producto->imagen);
+                }
+
+                $data['imagen'] = $request
+                    ->file('imagen')
+                    ->store('productos', 'public');
             }
 
-            $data['imagen'] = $request->file('imagen')->store('productos', 'public');
+            $producto->update($data);
+
+            return response()->json([
+
+                'message' => 'Producto actualizado correctamente',
+
+                'data' => $producto->load('categoria')
+            ]);
+
+        } catch (\Exception $e) {
+
+            Log::error('ERROR ACTUALIZANDO PRODUCTO: ' . $e->getMessage());
+
+            return response()->json([
+
+                'message' => 'Error al actualizar producto',
+
+                'error' => $e->getMessage()
+
+            ], 500);
         }
-
-        $producto->update($data);
-
-        return response()->json([
-            'message' => 'Producto actualizado correctamente',
-            'data' => $producto->load('categoria')
-        ]);
     }
 
     public function destroy($id)
     {
-        $producto = Producto::findOrFail($id);
+        try {
 
-        if ($producto->imagen) {
-            Storage::disk('public')->delete($producto->imagen);
+            $producto = Producto::findOrFail($id);
+
+            if ($producto->imagen) {
+
+                Storage::disk('public')
+                    ->delete($producto->imagen);
+            }
+
+            $producto->delete();
+
+            return response()->json([
+
+                'message' => 'Producto eliminado correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+
+            Log::error('ERROR ELIMINANDO PRODUCTO: ' . $e->getMessage());
+
+            return response()->json([
+
+                'message' => 'Error al eliminar producto',
+
+                'error' => $e->getMessage()
+
+            ], 500);
         }
-
-        $producto->delete();
-
-        return response()->json([
-            'message' => 'Producto eliminado correctamente'
-        ]);
     }
 
     public function stockBajo()
@@ -106,6 +182,9 @@ class ProductoController extends Controller
 
     public function exportExcel()
     {
-        return Excel::download(new ProductosExport, 'productos.xlsx');
+        return Excel::download(
+            new ProductosExport,
+            'productos.xlsx'
+        );
     }
 }
