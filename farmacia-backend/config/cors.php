@@ -7,10 +7,8 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://proyectofinal-topicosweb-farmacia-1-1lev.onrender.com',
-        'https://proyectofinal-topicosweb-farmacia-1.onrender.com',
-        'http://localhost:5173'
-    ],
+    'https://proyectofinal-topicosweb-farmacia-1-1lev.onrender.com',
+],
 
     'allowed_origins_patterns' => [],
 
