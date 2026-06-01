@@ -27,10 +27,10 @@ class ProductoRequest extends FormRequest
         'precio' => 'required|numeric|min:0',
         'stock' => 'required|integer|min:0',
         'stock_minimo' => 'nullable|integer|min:0',
-        'categoria_id' => 'required|exists:categorias,id',
+        'categoria_id' => 'required|integer|exists:categorias,id',
     ];
 
-    // 👇 SOLO para imagen (MUY IMPORTANTE)
+    // SOLO para imagen (MUY IMPORTANTE)
     $rules['imagen'] = 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048';
 
     return $rules;

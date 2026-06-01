@@ -152,7 +152,11 @@ const actualizar = async () => {
         !form.stock ||
         !form.categoria_id
     ) {
-        Swal.fire("Error", "Completa todos los campos obligatorios", "warning");
+        Swal.fire(
+            "Error",
+            "Completa todos los campos obligatorios",
+            "warning"
+        );
         return;
     }
 
@@ -165,18 +169,18 @@ const actualizar = async () => {
         formData.append("nombre", form.nombre.trim());
         formData.append("codigo", form.codigo.trim());
         formData.append("tipo", form.tipo);
-        formData.append("precio", parseFloat(form.precio));
-        formData.append("stock", parseInt(form.stock));
-        formData.append("stock_minimo", parseInt(form.stock_minimo || 0));
-        formData.append("categoria_id", parseInt(form.categoria_id));
+        formData.append("precio", form.precio);
+        formData.append("stock", form.stock);
+        formData.append("stock_minimo", form.stock_minimo || 0);
+        formData.append("categoria_id", form.categoria_id);
 
-        await api.post(`/productos/${id}`, formData, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        });
+        await api.post(`/productos/${id}`, formData);
 
-        Swal.fire("Actualizado", "Producto actualizado correctamente", "success");
+        Swal.fire(
+            "Actualizado",
+            "Producto actualizado correctamente",
+            "success"
+        );
 
         navigate("/productos");
 
