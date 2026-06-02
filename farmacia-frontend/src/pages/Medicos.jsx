@@ -27,6 +27,14 @@ function Medicos() {
     const [saving, setSaving] = useState(false);
 
     // =========================================
+// PAGINACIÓN
+// =========================================
+
+const [paginaActual, setPaginaActual] = useState(1);
+
+const medicosPorPagina = 5;
+
+    // =========================================
     // VALIDACIONES
     // =========================================
     const soloLetras =
@@ -327,6 +335,30 @@ const validar = (data) => {
 
     );
 
+
+
+    // =========================================
+// DATOS PAGINADOS
+// =========================================
+
+const indiceUltimoMedico =
+    paginaActual * medicosPorPagina;
+
+const indicePrimerMedico =
+    indiceUltimoMedico - medicosPorPagina;
+
+const medicosPaginados =
+    filtrados.slice(
+        indicePrimerMedico,
+        indiceUltimoMedico
+    );
+
+const totalPaginas =
+    Math.ceil(
+        filtrados.length /
+        medicosPorPagina
+    );
+
     // =========================================
     // LOADING
     // =========================================
@@ -370,9 +402,15 @@ const validar = (data) => {
                             className="form-control"
                             placeholder="Buscar médico..."
                             value={busqueda}
-                            onChange={(e) =>
-                                setBusqueda(e.target.value)
-                            }
+                            onChange={(e) => {
+
+                                setBusqueda(
+                                    e.target.value
+                                );
+
+                                setPaginaActual(1);
+
+                            }}
                             style={{
                                 maxWidth: "320px"
                             }}
@@ -523,7 +561,7 @@ const validar = (data) => {
                                 {
                                     filtrados.length > 0 ? (
 
-                                        filtrados.map((m) => (
+                                        medicosPaginados.map((m) => (
 
                                             <tr key={m.id}>
 
@@ -582,6 +620,92 @@ const validar = (data) => {
                         </table>
 
                     </div>
+
+                    {
+    totalPaginas > 1 && (
+
+        <div className="d-flex justify-content-center mt-4">
+
+            <nav>
+
+                <ul className="pagination">
+
+                    <li
+                        className={`page-item ${
+                            paginaActual === 1
+                                ? "disabled"
+                                : ""
+                        }`}
+                    >
+                        <button
+                            className="page-link"
+                            onClick={() =>
+                                setPaginaActual(
+                                    paginaActual - 1
+                                )
+                            }
+                        >
+                            ◀
+                        </button>
+                    </li>
+
+                    {
+                        [...Array(totalPaginas)].map(
+                            (_, index) => (
+
+                                <li
+                                    key={index}
+                                    className={`page-item ${
+                                        paginaActual ===
+                                        index + 1
+                                            ? "active"
+                                            : ""
+                                    }`}
+                                >
+                                    <button
+                                        className="page-link"
+                                        onClick={() =>
+                                            setPaginaActual(
+                                                index + 1
+                                            )
+                                        }
+                                    >
+                                        {index + 1}
+                                    </button>
+                                </li>
+
+                            )
+                        )
+                    }
+
+                    <li
+                        className={`page-item ${
+                            paginaActual ===
+                            totalPaginas
+                                ? "disabled"
+                                : ""
+                        }`}
+                    >
+                        <button
+                            className="page-link"
+                            onClick={() =>
+                                setPaginaActual(
+                                    paginaActual + 1
+                                )
+                            }
+                        >
+                            ▶
+                        </button>
+                    </li>
+
+                </ul>
+
+            </nav>
+
+        </div>
+
+    )
+}
 
                 </div>
 

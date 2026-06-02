@@ -18,6 +18,13 @@ function Productos() {
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [busqueda, setBusqueda] = useState("");
+    // =========================
+// PAGINACIÓN
+// =========================
+const [paginaActual, setPaginaActual] = useState(1);
+
+const productosPorPagina = 5;
+
     const navigate = useNavigate();
 
     let user = null;
@@ -219,6 +226,27 @@ try {
                 )
         );
 
+// =========================
+// DATOS PAGINADOS
+// =========================
+const indiceUltimoProducto =
+    paginaActual * productosPorPagina;
+
+const indicePrimerProducto =
+    indiceUltimoProducto - productosPorPagina;
+
+const productosPaginados =
+    productosFiltrados.slice(
+        indicePrimerProducto,
+        indiceUltimoProducto
+    );
+
+const totalPaginas =
+    Math.ceil(
+        productosFiltrados.length /
+        productosPorPagina
+    );
+
     return (
 
         <div className="container-fluid py-4">
@@ -278,11 +306,10 @@ try {
                         className="form-control mb-4"
                         placeholder="🔍 Buscar producto..."
                         value={busqueda}
-                        onChange={(e) =>
-                            setBusqueda(
-                                e.target.value
-                            )
-                        }
+                        onChange={(e) => {
+                        setBusqueda(e.target.value);
+                        setPaginaActual(1);
+                    }}
                     />
 
                     {/* LOADING */}
@@ -334,8 +361,7 @@ try {
                                     <tbody>
 
                                         {
-                                            productosFiltrados.map((row) => (
-
+                                        productosPaginados.map((row) => (
                                                 <tr key={row.id}>
 
                                                     <td>
@@ -435,6 +461,93 @@ try {
 
                         )
                     }
+
+                    {/* PAGINACIÓN */}
+{
+    totalPaginas > 1 && (
+
+        <div className="d-flex justify-content-center mt-4">
+
+            <nav>
+
+                <ul className="pagination">
+
+                    <li
+                        className={`page-item ${
+                            paginaActual === 1
+                                ? "disabled"
+                                : ""
+                        }`}
+                    >
+                        <button
+                            className="page-link"
+                            onClick={() =>
+                                setPaginaActual(
+                                    paginaActual - 1
+                                )
+                            }
+                        >
+                            ◀
+                        </button>
+                    </li>
+
+                    {
+                        [...Array(totalPaginas)].map(
+                            (_, index) => (
+
+                                <li
+                                    key={index}
+                                    className={`page-item ${
+                                        paginaActual ===
+                                        index + 1
+                                            ? "active"
+                                            : ""
+                                    }`}
+                                >
+                                    <button
+                                        className="page-link"
+                                        onClick={() =>
+                                            setPaginaActual(
+                                                index + 1
+                                            )
+                                        }
+                                    >
+                                        {index + 1}
+                                    </button>
+                                </li>
+
+                            )
+                        )
+                    }
+
+                    <li
+                        className={`page-item ${
+                            paginaActual ===
+                            totalPaginas
+                                ? "disabled"
+                                : ""
+                        }`}
+                    >
+                        <button
+                            className="page-link"
+                            onClick={() =>
+                                setPaginaActual(
+                                    paginaActual + 1
+                                )
+                            }
+                        >
+                            ▶
+                        </button>
+                    </li>
+
+                </ul>
+
+            </nav>
+
+        </div>
+
+    )
+}
 
                 </div>
 

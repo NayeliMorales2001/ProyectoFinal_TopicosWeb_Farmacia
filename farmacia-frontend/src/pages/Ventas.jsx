@@ -17,6 +17,9 @@ function Ventas() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null);
+    // PAGINACIÓN
+const [paginaActual, setPaginaActual] = useState(1);
+const registrosPorPagina = 5;
 
     const cargar = async () => {
         try {
@@ -179,6 +182,20 @@ function Ventas() {
             </div>
         );
     }
+
+
+    // PAGINACIÓN
+const indiceUltimo = paginaActual * registrosPorPagina;
+const indicePrimero = indiceUltimo - registrosPorPagina;
+
+const ventasPaginadas = ventasFiltradas.slice(
+    indicePrimero,
+    indiceUltimo
+);
+
+const totalPaginas = Math.ceil(
+    ventasFiltradas.length / registrosPorPagina
+);
 
     return (
         <div className="container-fluid py-4">
@@ -407,7 +424,10 @@ function Ventas() {
                         className="form-control mb-4"
                         placeholder="🔍 Buscar por paciente o médico..."
                         value={buscarVenta}
-                        onChange={(e) => setBuscarVenta(e.target.value)}
+                        onChange={(e) => {
+                        setBuscarVenta(e.target.value);
+                        setPaginaActual(1);
+                    }}
                     />
 
                     {/* Tabla de ventas */}
@@ -426,7 +446,7 @@ function Ventas() {
                             </thead>
                             <tbody>
                                 {ventasFiltradas.length > 0 ? (
-                                    ventasFiltradas.map(v => (
+                                    ventasPaginadas.map(v => (
                                         <tr key={v.id}>
                                             <td>#{v.id}</td>
                                             <td>
@@ -466,6 +486,89 @@ function Ventas() {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* PAGINACIÓN */}
+{
+    totalPaginas > 1 && (
+
+        <nav className="mt-3">
+
+            <ul className="pagination justify-content-center">
+
+                <li
+                    className={`page-item ${
+                        paginaActual === 1
+                            ? "disabled"
+                            : ""
+                    }`}
+                >
+                    <button
+                        className="page-link"
+                        onClick={() =>
+                            setPaginaActual(
+                                paginaActual - 1
+                            )
+                        }
+                    >
+                        ←
+                    </button>
+                </li>
+
+                {
+                    [...Array(totalPaginas)].map(
+                        (_, index) => (
+
+                            <li
+                                key={index}
+                                className={`page-item ${
+                                    paginaActual ===
+                                    index + 1
+                                        ? "active"
+                                        : ""
+                                }`}
+                            >
+                                <button
+                                    className="page-link"
+                                    onClick={() =>
+                                        setPaginaActual(
+                                            index + 1
+                                        )
+                                    }
+                                >
+                                    {index + 1}
+                                </button>
+                            </li>
+
+                        )
+                    )
+                }
+
+                <li
+                    className={`page-item ${
+                        paginaActual ===
+                        totalPaginas
+                            ? "disabled"
+                            : ""
+                    }`}
+                >
+                    <button
+                        className="page-link"
+                        onClick={() =>
+                            setPaginaActual(
+                                paginaActual + 1
+                            )
+                        }
+                    >
+                        →
+                    </button>
+                </li>
+
+            </ul>
+
+        </nav>
+
+    )
+}
                 </div>
             </div>
         </div>
