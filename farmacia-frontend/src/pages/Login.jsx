@@ -142,7 +142,15 @@ localStorage.setItem(
 
         }
 
-    };
+        };
+
+    const emailValido =
+        email.length === 0 ||
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    const passwordValida =
+        password.length === 0 ||
+        password.length >= 6;
 
     return (
 
@@ -254,27 +262,40 @@ localStorage.setItem(
                         </div>
 
                         {/* EMAIL */}
-                        <div className="mb-3">
+                            <div className="mb-3">
 
-                            <label className="form-label fw-semibold">
-                                Correo electrónico
-                            </label>
+                                <label className="form-label fw-semibold">
+                                    Correo electrónico
+                                </label>
 
-                            <input
-                                type="email"
-                                className="form-control"
-                                placeholder="correo@ejemplo.com"
-                                value={email}
-                                onChange={(e) =>
-                                    setEmail(e.target.value)
+                                <input
+                                    type="email"
+                                    className={`form-control ${
+                                        !emailValido ? "is-invalid" : ""
+                                    } ${
+                                        email && emailValido ? "is-valid" : ""
+                                    }`}
+                                    placeholder="correo@ejemplo.com"
+                                    value={email}
+                                    onChange={(e) =>
+                                        setEmail(e.target.value)
+                                    }
+                                    style={{
+                                        padding: "12px",
+                                        borderRadius: "12px"
+                                    }}
+                                />
+
+                                {
+                                    email &&
+                                    !emailValido && (
+                                        <div className="invalid-feedback d-block">
+                                            Ingresa un correo válido (ejemplo@correo.com)
+                                        </div>
+                                    )
                                 }
-                                style={{
-                                    padding: "12px",
-                                    borderRadius: "12px"
-                                }}
-                            />
 
-                        </div>
+                            </div>
 
                         {/* PASSWORD */}
                         <div className="mb-3 position-relative">
@@ -289,7 +310,11 @@ localStorage.setItem(
                                         ? "text"
                                         : "password"
                                 }
-                                className="form-control"
+                                className={`form-control ${
+                                    !passwordValida ? "is-invalid" : ""
+                                } ${
+                                    password.length >= 6 ? "is-valid" : ""
+                                }`}
                                 placeholder="********"
                                 value={password}
                                 onChange={(e) =>
@@ -316,6 +341,24 @@ localStorage.setItem(
                             >
                                 {showPassword ? "Ocultar" : "Ver"}
                             </span>
+
+                            {
+                                password.length > 0 && (
+                                    <small
+                                        className={`d-block mt-2 ${
+                                            password.length >= 6
+                                                ? "text-success"
+                                                : "text-danger"
+                                        }`}
+                                    >
+                                        {
+                                            password.length >= 6
+                                                ? "✓ Contraseña válida"
+                                                : "La contraseña debe tener mínimo 6 caracteres"
+                                        }
+                                    </small>
+                                )
+                            }
 
                         </div>
 
