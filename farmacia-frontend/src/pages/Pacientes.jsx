@@ -11,6 +11,8 @@ function Pacientes() {
     const [buscar, setBuscar] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState("");
+    const [paginaActual, setPaginaActual] = useState(1);
+    const pacientesPorPagina = 5;
 
     // Estado para el paciente en edición
     const [pacienteEdit, setPacienteEdit] = useState({
@@ -274,6 +276,20 @@ function Pacientes() {
         (p.nombre || "").toLowerCase().includes(buscar.toLowerCase())
     );
 
+    // PAGINACIÓN
+        const indiceUltimoPaciente = paginaActual * pacientesPorPagina;
+        const indicePrimerPaciente = indiceUltimoPaciente - pacientesPorPagina;
+
+        const pacientesPaginados = pacientesFiltrados.slice(
+            indicePrimerPaciente,
+            indiceUltimoPaciente
+        );
+
+        const totalPaginas = Math.ceil(
+            pacientesFiltrados.length / pacientesPorPagina
+        );
+        
+
     return (
         <div className="container-fluid py-4">
             {/* Header con título y contador */}
@@ -453,7 +469,10 @@ function Pacientes() {
                         className="form-control mb-4"
                         placeholder="🔍 Buscar paciente por nombre..."
                         value={buscar}
-                        onChange={(e) => setBuscar(e.target.value)}
+                        onChange={(e) => {
+                            setBuscar(e.target.value);
+                            setPaginaActual(1);
+                        }}
                     />
 
                     {/* Tabla */}
@@ -471,51 +490,108 @@ function Pacientes() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {pacientesFiltrados.length > 0 ? (
-                                    pacientesFiltrados.map((p) => (
-                                        <tr key={p.id}>
-                                            <td>
-                                                {p.foto ? (
-                                                    <img src={p.foto} alt={p.nombre} style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "50%" }} />
-                                                ) : (
-                                                    <div className="bg-light rounded-circle d-flex align-items-center justify-content-center" style={{ width: "40px", height: "40px" }}>
-                                                        <span className="text-muted small">—</span>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td>{p.nombre}</td>
-                                            <td>{p.edad}</td>
-                                            <td>{p.doctor}</td>
-                                            <td>{p.medicamento} - {p.dosis}</td>
-                                            <td>{p.fecha}</td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-warning btn-sm me-1"
-                                                    onClick={() => seleccionarPaciente(p)}
+                            {pacientesPaginados.length > 0 ? (
+                                pacientesPaginados.map((p) => (
+                                    <tr key={p.id}>
+                                        <td>
+                                            {p.foto ? (
+                                                <img
+                                                    src={p.foto}
+                                                    alt={p.nombre}
+                                                    style={{
+                                                        width: "40px",
+                                                        height: "40px",
+                                                        objectFit: "cover",
+                                                        borderRadius: "50%"
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="bg-light rounded-circle d-flex align-items-center justify-content-center"
+                                                    style={{
+                                                        width: "40px",
+                                                        height: "40px"
+                                                    }}
                                                 >
-                                                    ✏️
+                                                    <span className="text-muted small">—</span>
+                                                </div>
+                                            )}
+                                        </td>
+
+                                        <td>{p.nombre}</td>
+                                        <td>{p.edad}</td>
+                                        <td>{p.doctor}</td>
+                                        <td>{p.medicamento} - {p.dosis}</td>
+                                        <td>{p.fecha}</td>
+
+                                        <td>
+                                            <button
+                                                className="btn btn-warning btn-sm me-1"
+                                                onClick={() => seleccionarPaciente(p)}
+                                            >
+                                                ✏️
+                                            </button>
+
+                                            {user?.rol === "admin" && (
+                                                <button
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => eliminar(p.id)}
+                                                >
+                                                    🗑️
                                                 </button>
-                                                {user?.rol === "admin" && (
-                                                    <button
-                                                        className="btn btn-danger btn-sm"
-                                                        onClick={() => eliminar(p.id)}
-                                                    >
-                                                        🗑️
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="7" className="text-center py-4">
-                                            No hay pacientes registrados
+                                            )}
                                         </td>
                                     </tr>
-                                )}
-                            </tbody>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="7" className="text-center py-4">
+                                        No hay pacientes registrados
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
                         </table>
                     </div>
+                    {
+    totalPaginas > 1 && (
+        <div className="d-flex justify-content-center align-items-center mt-4 gap-2">
+
+            <button
+                className="btn btn-outline-primary"
+                disabled={paginaActual === 1}
+                onClick={() => setPaginaActual(paginaActual - 1)}
+            >
+                ← Anterior
+            </button>
+
+            {
+                [...Array(totalPaginas)].map((_, index) => (
+                    <button
+                        key={index}
+                        className={
+                            paginaActual === index + 1
+                                ? "btn btn-primary"
+                                : "btn btn-outline-primary"
+                        }
+                        onClick={() => setPaginaActual(index + 1)}
+                    >
+                        {index + 1}
+                    </button>
+                ))
+            }
+
+                <button
+                    className="btn btn-outline-primary"
+                    disabled={paginaActual === totalPaginas}
+                    onClick={() => setPaginaActual(paginaActual + 1)}
+                >
+                    Siguiente →
+                </button>
+
+            </div>
+        )
+    }
                 </div>
             </div>
 
