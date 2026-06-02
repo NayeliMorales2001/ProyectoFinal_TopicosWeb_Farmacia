@@ -116,17 +116,43 @@ function Ventas() {
 
         try {
             setSaving(true);
-            await api.post("/ventas", {
-                paciente_id: pacienteId,
-                medico_id: medicoId,
-                productos: productosSeleccionados.map(p => ({ producto_id: p.id, cantidad: p.cantidad }))
-            });
+            
+            // Calcular el total
+            const total = productosSeleccionados.reduce((acc, p) => acc + (p.precio * p.cantidad), 0);
+            
+            // Estructura de datos para el backend
+            const data = {
+                paciente_id: parseInt(pacienteId),
+                medico_id: parseInt(medicoId),
+                total: total,
+                productos: productosSeleccionados.map(p => ({
+                    producto_id: p.id,
+                    cantidad: p.cantidad,
+                    precio: p.precio
+                }))
+            };
+            
+            console.log("Enviando datos:", data); // Para depurar
+            
+            const response = await api.post("/ventas", data);
+            
+            console.log("Respuesta:", response.data);
+            
             Swal.fire("Éxito", "Venta registrada correctamente", "success");
             limpiar();
             cargar();
         } catch (error) {
             console.error("Error guardando venta:", error);
-            Swal.fire("Error", error.response?.data?.message || "Error al guardar", "error");
+            console.error("Detalles del error:", error.response?.data);
+            
+            let mensajeError = "Error al guardar la venta";
+            if (error.response?.data?.message) {
+                mensajeError = error.response.data.message;
+            } else if (error.response?.data?.error) {
+                mensajeError = error.response.data.error;
+            }
+            
+            Swal.fire("Error", mensajeError, "error");
         } finally {
             setSaving(false);
         }
@@ -288,7 +314,7 @@ function Ventas() {
                                             <tr>
                                                 <td colSpan="3" className="text-end fw-bold">Total:</td>
                                                 <td className="fw-bold text-success fs-5">${totalActual.toFixed(2)}</td>
-                                                <td></td>
+                                                <td>\n                                                </td>
                                             </tr>
                                         </tfoot>
                                     </table>
