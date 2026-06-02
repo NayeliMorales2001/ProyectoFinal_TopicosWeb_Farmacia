@@ -12,9 +12,6 @@ class Venta extends Model
         'total'
     ];
 
-    // ==========================
-    // PACIENTE
-    // ==========================
     public function paciente()
     {
         return $this->belongsTo(
@@ -23,9 +20,6 @@ class Venta extends Model
         );
     }
 
-    // ==========================
-    // MEDICO
-    // ==========================
     public function medico()
     {
         return $this->belongsTo(
@@ -34,9 +28,6 @@ class Venta extends Model
         );
     }
 
-    // ==========================
-    // DETALLES
-    // ==========================
     public function detalles()
     {
         return $this->hasMany(
