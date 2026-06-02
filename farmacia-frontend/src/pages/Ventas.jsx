@@ -16,6 +16,7 @@ function Ventas() {
     const [buscarVenta, setBuscarVenta] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null);
 
     const cargar = async () => {
         try {
@@ -102,12 +103,13 @@ function Ventas() {
     };
 
     const limpiar = () => {
-        setProductosSeleccionados([]);
-        setPacienteId("");
-        setMedicoId("");
-        setProductoActual("");
-        setCantidadActual(1);
-    };
+    setProductosSeleccionados([]);
+    setPacienteId("");
+    setMedicoId("");
+    setProductoActual("");
+    setCantidadActual(1);
+    setPacienteSeleccionado(null);
+};
 
     const guardarVenta = async () => {
         if (!pacienteId || !medicoId || productosSeleccionados.length === 0) {
@@ -198,14 +200,40 @@ function Ventas() {
                         {/* Paciente */}
                         <div className="col-md-6">
                             <label className="form-label fw-bold">👤 Paciente</label>
-                            <select 
-                                className="form-select" 
-                                value={pacienteId} 
-                                onChange={(e) => setPacienteId(e.target.value)}
+                            <select
+                                className="form-select"
+                                value={pacienteId}
+                                onChange={(e) => {
+
+                                    const id = e.target.value;
+
+                                    setPacienteId(id);
+
+                                    const paciente = pacientes.find(
+                                        p => p.id === parseInt(id)
+                                    );
+
+                                    setPacienteSeleccionado(paciente || null);
+
+                                    if (paciente?.doctor) {
+                                    const medicoEncontrado = medicos.find(
+                                        m =>
+                                            m.nombre?.trim().toLowerCase() ===
+                                            paciente.doctor.trim().toLowerCase()
+                                    );
+
+                                    if (medicoEncontrado) {
+                                        setMedicoId(medicoEncontrado.id);
+                                    }
+                                }
+                                }}
                             >
                                 <option value="">Seleccionar paciente</option>
+
                                 {pacientes.map(p => (
-                                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                                    <option key={p.id} value={p.id}>
+                                        {p.nombre}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -223,6 +251,34 @@ function Ventas() {
                                     <option key={m.id} value={m.id}>{m.nombre}</option>
                                 ))}
                             </select>
+                            {
+                                pacienteSeleccionado && (
+
+                                    <div className="alert alert-info mt-3">
+
+                                        <h6>📋 Receta del paciente</h6>
+
+                                        <p>
+                                            <strong>Médico:</strong>
+                                            {" "}
+                                            {pacienteSeleccionado.doctor}
+                                        </p>
+
+                                        <p>
+                                            <strong>Medicamento:</strong>
+                                            {" "}
+                                            {pacienteSeleccionado.medicamento}
+                                        </p>
+
+                                        <p>
+                                            <strong>Dosis:</strong>
+                                            {" "}
+                                            {pacienteSeleccionado.dosis}
+                                        </p>
+
+                                    </div>
+                                )
+                            }
                         </div>
 
                         {/* Agregar Productos */}
@@ -314,7 +370,7 @@ function Ventas() {
                                             <tr>
                                                 <td colSpan="3" className="text-end fw-bold">Total:</td>
                                                 <td className="fw-bold text-success fs-5">${totalActual.toFixed(2)}</td>
-                                                <td>\n                                                </td>
+                                                <td>                                                </td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -380,12 +436,14 @@ function Ventas() {
                                             </td>
                                             <td>{v.medico?.nombre}</td>
                                             <td>
-                                                {v.productos?.map((prod, idx) => (
-                                                    <div key={idx}>
-                                                        <small>{prod.nombre} x{prod.cantidad}</small>
-                                                    </div>
-                                                ))}
-                                            </td>
+                                            {v.detalles?.map((detalle, idx) => (
+                                                <div key={idx}>
+                                                    <small>
+                                                        {detalle.producto?.nombre} x{detalle.cantidad}
+                                                    </small>
+                                                </div>
+                                            ))}
+                                        </td>
                                             <td className="fw-bold text-success">${v.total}</td>
                                             <td>{new Date(v.created_at).toLocaleDateString()}</td>
                                             <td>
