@@ -41,7 +41,7 @@ Route::middleware('throttle:60,1')->group(function () {
     // PDF PÚBLICO
     // =========================================
 
-   // Route::get('/ventas/pdf/{id}', [VentaController::class, 'pdf']);
+   Route::get('/ventas/pdf/{id}', [VentaController::class, 'pdf']);
 });
 
 // =========================================
@@ -128,7 +128,6 @@ Route::middleware(['role:admin'])->group(function () {
 
     Route::get('/ventas-historial', [VentaController::class, 'historial']);
 
-    Route::get('/ventas/pdf/{id}', [VentaController::class, 'pdf']);
 
     // =========================================
     // PACIENTES

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Receta Médica</title>
@@ -8,20 +9,23 @@
         body {
             font-family: Arial, sans-serif;
             margin: 40px;
+            color: #333;
         }
 
         .header {
             text-align: center;
             border-bottom: 2px solid #000;
-            padding-bottom: 10px;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
         }
 
         .logo {
             width: 80px;
+            margin-bottom: 10px;
         }
 
         .titulo {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
         }
 
@@ -40,8 +44,24 @@
 
         .box {
             border: 1px solid #000;
-            padding: 10px;
+            padding: 15px;
             margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .producto {
+            margin-bottom: 15px;
+        }
+
+        .producto hr {
+            margin-top: 10px;
+        }
+
+        .total {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: right;
         }
 
         .firma {
@@ -50,64 +70,159 @@
         }
 
         .footer {
-            margin-top: 40px;
-            font-size: 12px;
+            margin-top: 50px;
             text-align: center;
+            font-size: 12px;
             color: gray;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+
+        table th {
+            background: #f2f2f2;
         }
     </style>
 </head>
 
 <body>
 
-    <!-- 🔥 ENCABEZADO -->
+    <!-- ENCABEZADO -->
     <div class="header">
 
-        <img src="https://cdn-icons-png.flaticon.com/512/4320/4320371.png" class="logo">
+        <img
+            src="https://cdn-icons-png.flaticon.com/512/4320/4320371.png"
+            class="logo">
 
-        <div class="titulo">FARMACIA SALUD+</div>
-        <div class="subtitulo">Sistema de Gestión Médica</div>
+        <div class="titulo">
+            FARMACIA SALUD+
+        </div>
+
+        <div class="subtitulo">
+            Sistema de Gestión Médica
+        </div>
 
     </div>
 
-    <!-- 🔥 DATOS PACIENTE -->
+    <!-- DATOS GENERALES -->
     <div class="section">
-        <p><span class="label">Paciente:</span> {{ $venta->paciente->nombre }}</p>
-        <p><span class="label">Fecha:</span> {{ date('d/m/Y', strtotime($venta->created_at)) }}</p>
+
+        <p>
+            <span class="label">Folio Venta:</span>
+            #{{ $venta->id }}
+        </p>
+
+        <p>
+            <span class="label">Paciente:</span>
+            {{ $venta->paciente->nombre ?? 'Sin paciente' }}
+        </p>
+
+        <p>
+            <span class="label">Médico:</span>
+            {{ $venta->medico->nombre ?? 'Sin médico' }}
+        </p>
+
+        <p>
+            <span class="label">Fecha:</span>
+            {{ date('d/m/Y H:i', strtotime($venta->created_at)) }}
+        </p>
+
     </div>
 
-    <!-- 🔥 RECETA -->
-    <div class="section box">
-
-        <p><span class="label">Medicamento:</span> {{ $venta->producto->nombre }}</p>
-
-        <p><span class="label">Cantidad:</span> {{ $venta->cantidad }}</p>
-
-        <p><span class="label">Precio Unitario:</span> ${{ $venta->precio }}</p>
-
-        <p><span class="label">Total:</span> ${{ $venta->total }}</p>
-
-    </div>
-
-    <!-- 🔥 INDICACIONES -->
+    <!-- PRODUCTOS -->
     <div class="section">
-        <p class="label">Indicaciones:</p>
+
+        <h3>Detalle de Productos</h3>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @foreach($venta->detalles as $detalle)
+
+                    <tr>
+                        <td>
+                            {{ $detalle->producto->nombre ?? 'Producto eliminado' }}
+                        </td>
+
+                        <td>
+                            {{ $detalle->cantidad }}
+                        </td>
+
+                        <td>
+                            ${{ number_format($detalle->precio, 2) }}
+                        </td>
+
+                        <td>
+                            ${{ number_format($detalle->subtotal, 2) }}
+                        </td>
+                    </tr>
+
+                @endforeach
+
+            </tbody>
+
+        </table>
+
+        <div class="total">
+            Total: ${{ number_format($venta->total, 2) }}
+        </div>
+
+    </div>
+
+    <!-- INDICACIONES -->
+    <div class="section">
+
+        <p class="label">
+            Indicaciones:
+        </p>
 
         <div class="box">
-            Tomar según indicaciones médicas. No exceder la dosis recomendada.
+            Tomar los medicamentos según las indicaciones médicas.
+            No exceder la dosis recomendada.
         </div>
+
     </div>
 
-    <!-- 🔥 FIRMA -->
+    <!-- FIRMA -->
     <div class="firma">
-        ___________________________<br>
-        Firma del Médico
+
+        ___________________________
+
+        <br>
+
+        Dr(a). {{ $venta->medico->nombre ?? '' }}
+
     </div>
 
-    <!-- 🔥 FOOTER -->
+    <!-- FOOTER -->
     <div class="footer">
-        Farmacia Salud+ | Tel: 123-456-7890 | Dirección: Zacatecas, México
+
+        Farmacia Salud+ <br>
+
+        Sistema ERP de Farmacia
+
     </div>
 
 </body>
+
 </html>
